@@ -2,7 +2,7 @@
 
 ToKillATweetingBird (✨Thread's Version✨) or ToKATB (✨Thread's Version✨) is a multithreaded scraper, based on Selenium, that helps you to retrieve the body content of the tweets (now posts in X) contained within a list of tweet identifiers.
 
-This tool consists of two parts that are executed reparately:
+This tool consists of two parts that are executed separately:
 
 1. A scraper that retrieves the HTML content of the tweet.
 2. A parser that, given a list of HTML tweets, extracts the information contained within the tweet.
