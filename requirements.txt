@@ -1,0 +1,5 @@
+selenium>=4.8.0
+pandas
+dynaconf
+psycopg-binary
+lxml

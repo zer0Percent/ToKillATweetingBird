@@ -1,0 +1,3 @@
+[database_parameters]
+connection = {'database' = 'tweetdata', 'host' = 'localhost', 'user' = 'YOURUSER', 'password' = 'YOURPASSWORD', 'port' = '5432'}
+parsed_tweet_connection = {'database' = 'tweetmodeling', 'host' = 'localhost', 'user' = 'YOURUSER', 'password' = 'YOURPASSWORD', 'port' = '5432'}

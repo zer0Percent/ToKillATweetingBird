@@ -1,0 +1,11 @@
+src/scraper/__pycache__
+src/scraper/webdriver/__pycache__
+src/scraper/.DS_Store
+src/.DS_Store
+src/scraper/__pycache__
+src/scraper/__pycache__
+*.pyc
+.DS_Store
+*.log
+chromedriver
+geckodriver
