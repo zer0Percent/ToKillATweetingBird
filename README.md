@@ -20,7 +20,7 @@ For example, in one Iteration, we could find some tweets that has been deleted, 
 # Database tables
 We setup two databases in order to store the raw (HTML) tweets and the curated ones. That is, one for the Scraper and one for the parser.
 
-We recommend to build backups of your databases and store them in a safe storage system. Just in case that something goes REALLY wrong (you could lost all your data).
+We recommend to build backups of your databases and store them in a safe storage system. Just in case that something goes REALLY wrong (you could lose all your data).
 
 ## Scraper
 There are two tables: `tweetdata.dbo.raw_tweet` and `tweetdata.dbo.preloaded_dataset`. The first one stores the following information per tweet:
