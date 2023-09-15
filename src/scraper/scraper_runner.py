@@ -176,7 +176,7 @@ class ScraperRunner:
                 end = time.time()
                     
                 logging.info(f'[ITERATION {i}] ETA: {end - start}')
-            thread_db.close_pool_connections()
+                thread_db.close_pool_connections()
 
         except Exception as e:
             logging.error(f'Error when starting to scrape tweets: {str(e)}. Closing tool... Reason: {e}')
