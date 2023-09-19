@@ -1,5 +1,6 @@
 selenium>=4.8.0
 pandas
 dynaconf
-psycopg-binary
+psycopg2-binary
 lxml
+fake-useragent~=1.2.1
