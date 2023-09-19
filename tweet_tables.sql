@@ -18,7 +18,7 @@ CREATE DATABASE IF NOT EXISTS tweetmodeling
     CONNECTION LIMIT = -1
     IS_TEMPLATE = False;
 
-CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawtweet_test
+CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawtweet
 ( tweet_id varchar(200),
   source_name varchar(100) DEFAULT '',
   is_empty BOOLEAN NOT NULL DEFAULT FALSE,
