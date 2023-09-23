@@ -15,6 +15,7 @@ WAIT_PRESENCE_TITLE_XPATH = '/html/head/title'
 EMPTY_TWEET_XPATH = '/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/div/span/span'
 PAGE_IS_DOWN_XPATH = '/html/body/div[2]/div[1]/h1'
 WAIT_FOR_TWEET_XPATH = '/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/section/div/div/div[1]/div/div/article/div/div/div[3]/div[1]/div'
+WAIT_FOR_TWEET_NO_CONTENT_XPATH = '/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/section/div/div/div[1]/div/div/article/div/div/div[3]/div[2]'
 
 WEBDRIVER_PATH_FIREFOX = './geckodriver'
 WEBDRIVER_PATH_CHROME = './chromedriver'

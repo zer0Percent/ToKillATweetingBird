@@ -59,7 +59,7 @@ class TweetRetrieverThread:
             url: str = f'{self.base_url}{tweet_id}'
             self.browser.get(url)
         except Exception as e:
-            raise GetTweetInBrowserException(f'Could not retrieve the tweet: Tweet URL: {self.base_url}{tweet_id}.')
+            raise GetTweetInBrowserException(f'Could not perform GET request of the tweet: Tweet URL: {self.base_url}{tweet_id}.')
     
     def get_tweet_from_browser(self, tweet_id: str):
 
@@ -108,11 +108,24 @@ class TweetRetrieverThread:
         
     def _wait_for_tweetdiv(self):
         try:
-            WebDriverWait(self.browser, self.tweet_wait_time).until(EC.visibility_of_element_located((By.XPATH, constants.WAIT_FOR_TWEET_XPATH)))
+            result: bool = self._wait_tweet_content()
+
+            if not result:
+                self._wait_tweet_with_no_textual_content()
 
         except Exception as e:
             raise WaitForTweetDivException(f'Error when accesing the DIV content of the tweet.')
+    
+    def _wait_tweet_content(self):
+        try:
+            WebDriverWait(self.browser, self.tweet_wait_time).until(EC.visibility_of_element_located((By.XPATH, constants.WAIT_FOR_TWEET_XPATH)))
+            return True
+        except Exception as e:
+            return False
         
+    def _wait_tweet_with_no_textual_content(self):
+        WebDriverWait(self.browser, self.tweet_wait_time).until(EC.visibility_of_element_located((By.XPATH, constants.WAIT_FOR_TWEET_NO_CONTENT_XPATH)))
+
     def _get_empty_tweet_content(self):
 
         try:
