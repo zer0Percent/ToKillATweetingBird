@@ -58,7 +58,7 @@ class ScraperRunner:
 
             attempt_chunk = 0
             candidate_tweets: list = tweet_ids
-            while attempt_chunk < constants.ATTEMPTS_PER_CHUNK:
+            while attempt_chunk < constants.ATTEMPTS_PER_CHUNK and len(candidate_tweets) > 0:
                 
                 random.shuffle(candidate_tweets)
                 pending_tweets_trial: set = ScraperRunner.trial_chunk_retrieval(
