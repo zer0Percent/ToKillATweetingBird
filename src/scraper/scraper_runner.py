@@ -80,7 +80,8 @@ class ScraperRunner:
                 tweet_retriever_thread.set_browser(browser)
 
             thread_manager.dispose_from_pool()
-
+            thread_manager.close_browser()
+            
             del tweet_saver
             del candidate_tweets
             del tweet_retriever_thread
