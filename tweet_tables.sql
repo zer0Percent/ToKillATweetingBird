@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawtweet
   is_empty BOOLEAN NOT NULL DEFAULT FALSE,
   is_retrieved BOOLEAN NOT NULL DEFAULT FALSE,
   tweet_content BYTEA NOT NULL DEFAULT '',
+  parsed BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (tweet_id, source_name)
 );
 
