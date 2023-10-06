@@ -38,7 +38,7 @@ class TweetParsedSaver:
         try:
             raw_tweets_query = ''' 
             SELECT tweet_id, tweet_content from dbo.rawtweet
-            WHERE source_name=%s AND is_empty=FALSE AND is_retrieved=TRUE LIMIT 100;
+            WHERE source_name=%s AND is_empty=FALSE AND is_retrieved=TRUE and parsed=FALSE;
             '''
             self.cursor_source.execute(raw_tweets_query, (data_source, ))
             self.connection_source.commit()
@@ -50,7 +50,7 @@ class TweetParsedSaver:
             return result
         
         except Exception as e:
-            raise GetRawTweetsException(f'Could not retrieve the raw tweets. Reason {e}.')
+            raise GetRawTweetsException(f'Could not retrieve the raw tweets for the source {data_source}. Reason {e}.')
     
     def close_connection_destiny(self):
         self.cursor_destiny.close()
