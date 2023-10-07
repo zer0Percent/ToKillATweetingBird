@@ -5,7 +5,7 @@ import tweet_versions
 from lxml import  html
 from tweet_parser import TweetParser
 from connection.tweet_parsed_saver import TweetParsedSaver
-from tweet_parser_exceptions import TweetVersioningException, PersistingTweetException, GetRawTweetsException
+from tweet_parser_exceptions import ParseTweetException, TweetVersioningException, PersistingTweetException, GetRawTweetsException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -16,21 +16,22 @@ class ParserRunner:
     def start(self, data_source: str):
 
         try:
-            raw_tweets: list = self.tweet_saver.get_raw_tweets(data_source)
+            parsed_tweets_count: int = 0
+            while True:
+                raw_tweets: list = self.tweet_saver.get_raw_tweets(data_source)
 
-            if len(raw_tweets) == 0:
-                logging.info(f'Nothing to parse from the dataset "{data_source}"... Closing parser.')
-                return 0
+                if len(raw_tweets) == 0:
+                    logging.info(f'Nothing to parse from the dataset "{data_source}"... Closing parser.')
+                    self.tweet_saver.close_connection_destiny()
+                    return parsed_tweets
 
-            logging.info(f'Inserting {len(raw_tweets)} tweets...')
-            parsed_tweets: int = self.persist_tweets(raw_tweets, data_source)
+                logging.info(f'Inserting {len(raw_tweets)} tweets...')
+                parsed_tweets: int = self.persist_tweets(raw_tweets, data_source)
 
-            logging.info(f'Inserted tweets: {parsed_tweets} of {len(raw_tweets)}. Closing tool...')
+                logging.info(f'Inserted tweets: {parsed_tweets} of {len(raw_tweets)}. ')
 
-            self.tweet_saver.close_connection_destiny()
-            del raw_tweets
-
-            return parsed_tweets
+                parsed_tweets_count += parsed_tweets
+                del raw_tweets
         
         except GetRawTweetsException as e:
             logging.error(f'{e.message} Clossing tool.')
@@ -46,7 +47,7 @@ class ParserRunner:
                 content = bytearray(byte_array_content).decode()
                 tweet_tree = html.fromstring(content)
 
-                tweet_version_xpaths: dict = self.get_tweet_version_xpaths(tweet_tree)
+                tweet_version_xpaths: dict = self.get_tweet_version_xpaths(tweet_tree, tweet_id)
                 tweet_parser: TweetParser = TweetParser(tweet_id=tweet_id, tweet_tree=tweet_tree, xpaths=tweet_version_xpaths)
 
                 tweet_parsed: dict = tweet_parser.parse_tweet()
@@ -77,6 +78,10 @@ class ParserRunner:
                 del tweet_version_xpaths
                 del tweet_parsed
                 del tweet_parser
+
+            except ParseTweetException as e:
+                logging.error(f'{e.message}')
+                
             except TweetVersioningException as e:
                 logging.error(f'{e.message}')
 
@@ -88,7 +93,7 @@ class ParserRunner:
         
         return parsed_tweets
     
-    def get_tweet_version_xpaths(self, tweet_tree):
+    def get_tweet_version_xpaths(self, tweet_tree, tweet_id):
         try:
             for version, xpaths in tweet_versions.TWEET_XPATH_VERSIONS.items():
                 tweet_div_xpath = xpaths[tweet_versions.TWEET_DIV_PROPERTY]
@@ -97,7 +102,7 @@ class ParserRunner:
                 if tweet_div_content != None:
                     return tweet_versions.TWEET_XPATH_VERSIONS[version]
             
-            raise Exception(f'Could not identify the version of the tweet. Tweet version not registered')
+            raise Exception(f'Could not identify the version of the tweet with ID {tweet_id}. Tweet version not registered')
         except Exception as e:
             raise TweetVersioningException(str(e))
     
