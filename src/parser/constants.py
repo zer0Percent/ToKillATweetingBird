@@ -20,3 +20,5 @@ BOOKMARKS_PROPERTY = 'bookmarks'
 IS_RETWEET_PROPERTY = 'is_retweet'
 RETWEETER_PROPERTY = 'retweeter'
 PUBLISH_TIME_PROPERTY = 'publish_time'
+
+NO_LANGUAGE = 'no_lang'
