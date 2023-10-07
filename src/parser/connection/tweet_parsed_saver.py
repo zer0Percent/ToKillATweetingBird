@@ -1,6 +1,6 @@
 import psycopg2
 from connection.config_parser import settings
-from tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException
+from tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException, UpdateParsedStatusException
 
 class TweetParsedSaver:
     def __init__(self):
@@ -23,6 +23,7 @@ class TweetParsedSaver:
                                 tweet_language, retweets, likes, citations, bookmarks, is_retweet, retweeter, publish_time)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
             '''
+
             self.cursor_destiny.execute(
                 save_tweet_query, tweet_parsed
             )
@@ -46,6 +47,24 @@ class TweetParsedSaver:
             self.connection_destiny.commit()
             raise PersistingTweetException(f'Could not save the tweet with ID {tweet_parsed[0]}. Reason: {e}')
     
+    def update_parsed_status(self, tweet_id: str, data_source: str):
+
+        try:
+
+            update_parsed_query = ''' 
+            UPDATE dbo.rawtweet
+            SET parsed = TRUE
+            WHERE
+                tweet_id=%s AND source_name=%s;
+            '''
+
+            self.cursor_source.execute(
+                update_parsed_query, (tweet_id, data_source)
+            )
+            self.connection_source.commit()
+        except Exception as e:
+            raise UpdateParsedStatusException(f'Could not update the parsed status of the tweet {tweet_id} at {data_source} dataset. Reason {e}')
+
     def get_raw_tweets(self, data_source: str):
 
         try:

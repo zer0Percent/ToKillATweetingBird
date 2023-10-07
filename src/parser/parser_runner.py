@@ -17,22 +17,18 @@ class ParserRunner:
 
         try:
             parsed_tweets_count: int = 0
+            logging.info(f'Parsing and inserting tweets...')
             while True:
                 raw_tweets: list = self.tweet_saver.get_raw_tweets(data_source)
 
                 if len(raw_tweets) == 0:
-                    logging.info(f'Nothing to parse from the dataset "{data_source}"... Closing parser.')
+                    logging.info(f'Parsed and inserted {parsed_tweets_count} Closing parser.')
                     self.tweet_saver.close_connection_destiny()
                     return parsed_tweets
-
-                logging.info(f'Inserting {len(raw_tweets)} tweets...')
                 parsed_tweets: int = self.persist_tweets(raw_tweets, data_source)
-
-                logging.info(f'Inserted tweets: {parsed_tweets} of {len(raw_tweets)}. ')
-
                 parsed_tweets_count += parsed_tweets
                 del raw_tweets
-        
+
         except GetRawTweetsException as e:
             logging.error(f'{e.message} Clossing tool.')
         except Exception as e:
@@ -83,6 +79,7 @@ class ParserRunner:
                 logging.error(f'{e.message}')
                 
             except TweetVersioningException as e:
+                self.tweet_saver.update_parsed_status(tweet_id, data_source)
                 logging.error(f'{e.message}')
 
             except PersistingTweetException as e:
