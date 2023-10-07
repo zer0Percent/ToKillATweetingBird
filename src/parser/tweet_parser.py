@@ -3,7 +3,7 @@ import sys
 import logging
 import constants
 import tweet_versions
-from tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
+from tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessImgElementException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -38,9 +38,9 @@ class TweetParser:
             activity_section: dict = self.extract_activity_section(self.tweet_nodes[tweet_versions.ACTIVITY_SECTION_PROPERTY])
 
             is_retweet: dict = self.extract_is_retweet(self.tweet_nodes[tweet_versions.IS_RETWEET_PROPERTY])
-            retweeter: dict = self.extract_retweeter(self.tweet_nodes[tweet_versions.RETWEETER_PROPERTY])
+            retweeter: dict = self.extract_retweeter(self.tweet_nodes[tweet_versions.IS_RETWEET_PROPERTY])
 
-            tweet_content: dict = self.extract_tweet_content(self.tweet_nodes[tweet_versions.TWEET_TEXTUAL_CONTENT_PROPERTY])
+            tweet_content: dict = self.extract_tweet_content(self.tweet_nodes[tweet_versions.TWEET_DIV_PROPERTY])
             citing_to: dict = self.extract_citing_tweet(tweet_content[constants.CONTENT_PROPERTY])
 
             language: dict = self.extract_language(self.tweet_nodes[tweet_versions.LANGUAGE_PROPERTY])
@@ -56,7 +56,7 @@ class TweetParser:
             return tweet
         
         except ParseTweetException as e:
-            logging.error(e.message)
+            raise e
     
     def extract_user_name(self, section):
         try:
@@ -136,42 +136,100 @@ class TweetParser:
             if section == None:
                 return {constants.RETWEETER_PROPERTY : None}
             
-            retweeter: str = section.attrib['href']
+            a_element_retweeter = section.getchildren()[0]
+            retweeter: str = a_element_retweeter.attrib['href']
             return {constants.RETWEETER_PROPERTY : retweeter.replace('/', '@')}
         except Exception as e:
             raise ExtractRetweeterException(f'Could not extract the retweeter of the tweet with ID {self.tweet_id}. Reason {e}')
     
     def extract_language(self, section):
         try:
-            return {constants.LANGUAGE_PROPERTY : section.attrib['lang']}
+            language_section = section.get('lang') if section is not None else constants.NO_LANGUAGE
+            return {constants.LANGUAGE_PROPERTY : language_section}
         except Exception as e:
             raise ExtractLanguageException(f'Could not extract the language of the tweet with ID {self.tweet_id}. Reason {e}')
         
     def extract_tweet_content(self, section):
         try:
-            tweet_content_tree = section.getchildren()[0].getchildren()
+
+            tweet_content_tree = self._get_tweet_content_tree(section)
             tweet_parsed = self.parse_tweet_content(tweet_content_tree)
 
             return {constants.CONTENT_PROPERTY : tweet_parsed}
         except Exception as e:
             raise ExtractTweetContentException(f'Could not extract the content of the tweet with ID {self.tweet_id}. Reason {e}')
+        
+    def _get_tweet_content_tree(self, section):
+
+        tweet_content_tree: list = list()
+
+        tweet_content_nodes = section.getchildren()
+        child_with_potential_textual_content = tweet_content_nodes[0].getchildren()[0].getchildren()
+        if len(child_with_potential_textual_content) > 0:
+            tweet_content_tree = tweet_content_tree + child_with_potential_textual_content[0].getchildren()
+        
+        multimedia_node = tweet_content_nodes[1]
+        multimedia_nodes = self._get_multimedia_nodes(multimedia_node)
+
+        return tweet_content_tree + multimedia_nodes
+    def _get_multimedia_nodes(self, multimedia_node):
+
+        multimedia_nodes: list = list()
+        video_elements = multimedia_node.findall('.//video')
+        if len(video_elements) > 0:
+            multimedia_nodes = multimedia_nodes +  video_elements
+
+        a_elements = multimedia_node.findall('.//a')
+        if len(a_elements) > 0:
+            for element in a_elements:
+                if '/photo/' not in element.attrib['href']:
+                    multimedia_nodes.append(element)
+
+        img_elements = multimedia_node.findall('.//img')
+        if len(img_elements) > 0:
+            multimedia_nodes = multimedia_nodes + img_elements
+
+        return multimedia_nodes
 
     def extract_citing_tweet(self, tweet_content: str):
 
         try:
-            if constants.CITE_WORDING not in tweet_content:
+            citations: list = self._get_citation_urls(tweet_content)
+
+            has_citations: bool = len(citations) > 0
+            if not has_citations:
                 return { constants.TWEET_ID_CITATION : None , constants.USERNAME_CITING_TO : None }
-            
-            cite_string: str = tweet_content.split(' ')[-1:][0] # The last element of the array
-            citation_url: list = cite_string.split(constants.CITE_WORDING)
 
-            username_citing_to: str = citation_url[0].replace('/', '@')
-            tweet_id_citation = citation_url[-1:][0] # The last element of the array
+            tweet_ids, usernames = self._parse_citations(citations)
 
-            return {constants.TWEET_ID_CITATION : tweet_id_citation, constants.USERNAME_CITING_TO : username_citing_to}
+            return {constants.TWEET_ID_CITATION : ", ".join(tweet_ids),
+                   constants.USERNAME_CITING_TO : ", ".join(usernames)}
+        
         except Exception as e:
             raise ExtractCitingToTweetException(f'Could not extract the citing tweet of the tweet with ID {self.tweet_id}. Reason {e}')
+    def _get_citation_urls(self, tweet_content: str):
+        split_tweet: list = tweet_content.split(' ')
 
+        citations: list = list()
+        for component in split_tweet:
+            if constants.CITE_WORDING in component and len(component.split('/')) == 4:
+                citations.append(component)
+        return citations
+    
+    def _parse_citations(self, citations: list):
+        usernames: list = list()
+        tweet_id_citations = list()
+        for cite in citations:
+            split_citation: list = cite.split('/status/')
+
+            username: str = split_citation[0].replace('/', '@')
+            usernames.append(username)
+
+            tweet_id: str = split_citation[1].split('/')[0]
+            tweet_id_citations.append(tweet_id)
+
+        return tweet_id_citations, usernames
+    
     def extract_publish_time(self, section):
         try:
             return {constants.PUBLISH_TIME_PROPERTY : section.attrib['datetime']}
@@ -229,7 +287,7 @@ class TweetParser:
 
                 self._process_text(dom_element, tweet)
 
-                self._process_emoji(dom_element, tweet)
+                self._process_multimedia(dom_element, tweet)
                     
                 self._process_a_element(dom_element, tweet)
 
@@ -242,8 +300,10 @@ class TweetParser:
         except ProcessTextException as e:
             raise e
         except ProcessEmojiException as e:
-            raise
+            raise e
         except ProcessAElementException as e:
+            raise e
+        except ProcessImgElementException as e:
             raise e
     
     def _process_mention(self, dom_element, tweet: list):
@@ -270,14 +330,22 @@ class TweetParser:
         except Exception as e:
             raise ProcessTextException(f'Error when processing the text for the tweet with ID {self.tweet_id}. Reason {e}')
 
-    def _process_emoji(self, dom_element, tweet: list):
+    def _process_multimedia(self, dom_element, tweet: list):
 
         try:
             if dom_element.tag == 'img':
+                
+                element = f' {dom_element.attrib["src"]}'
+                if dom_element.attrib['alt'] != 'Image':
+                    element = dom_element.attrib['alt']
+                    
+                tweet.append(element)
 
-                tweet.append(
-                    dom_element.attrib['alt']
-                )
+            if dom_element.tag == 'video':
+                element = f' {dom_element.attrib["src"]}'
+
+                tweet.append(element)
+                
         except Exception as e:
             raise ProcessEmojiException(f'Error when processing the emojis for the tweet with ID {self.tweet_id}. Reason {e}')
 
@@ -294,6 +362,17 @@ class TweetParser:
                 tweet.append(href)
         except Exception as e:
             raise ProcessAElementException(f'Error when processing the links for the tweet with ID {self.tweet_id}. Reason {e}')
+
+    def _process_img_element(self, dom_element, tweet: list):
+        try:
+            img = None
+            if dom_element.tag == 'img':
+                img = dom_element.attrib['src']
+
+            if img is not None:
+                tweet.append(img)
+        except Exception as e:
+            raise ProcessImgElementException(f'Error when processing the image for the tweet with ID {self.tweet_id}. Reason {e}')
 
     def get_node(self, node_name: str):
         return self.tweet_nodes[node_name]
