@@ -28,25 +28,36 @@ class TweetParsedSaver:
             )
 
             self.connection_destiny.commit()
+
+            update_parsed_query = ''' 
+            UPDATE dbo.rawtweet
+            SET parsed = TRUE
+            WHERE
+                tweet_id=%s AND source_name=%s;
+            '''
+
+            self.cursor_source.execute(
+                update_parsed_query, (tweet_parsed[0], tweet_parsed[1])
+            )
+            self.connection_source.commit()
+
         except Exception as e:
-            raise PersistingTweetException(f'Could not save the tweet. Reason: {e}')
-        finally:
+            self.connection_source.commit()
             self.connection_destiny.commit()
+            raise PersistingTweetException(f'Could not save the tweet with ID {tweet_parsed[0]}. Reason: {e}')
     
     def get_raw_tweets(self, data_source: str):
 
         try:
             raw_tweets_query = ''' 
             SELECT tweet_id, tweet_content from dbo.rawtweet
-            WHERE source_name=%s AND is_empty=FALSE AND is_retrieved=TRUE and parsed=FALSE;
+            WHERE source_name=%s AND is_empty=FALSE AND is_retrieved=TRUE and parsed=FALSE LIMIT 500;
             '''
             self.cursor_source.execute(raw_tweets_query, (data_source, ))
             self.connection_source.commit()
 
             result = self.cursor_source.fetchall()
 
-            self.cursor_source.close()
-            self.connection_source.close()
             return result
         
         except Exception as e:
