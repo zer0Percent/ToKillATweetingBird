@@ -208,7 +208,7 @@ class TweetParser:
         if len(img_elements) > 0:
             multimedia_nodes = multimedia_nodes + img_elements
 
-        return list(set(multimedia_nodes))
+        return multimedia_nodes
 
     def extract_citing_tweet(self, tweet_content: str):
 
@@ -357,7 +357,7 @@ class TweetParser:
                 element = f' {dom_element.attrib["src"]}'
                 if dom_element.attrib['alt'] != 'Image':
                     element = dom_element.attrib['alt']
-                    
+                    element = f' {element}'
                 tweet.append(element)
 
             if dom_element.tag == 'video':
