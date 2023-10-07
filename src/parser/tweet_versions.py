@@ -7,6 +7,7 @@ ACTIVITY_SECTION_PROPERTY = 'activity_section'
 PUBLISH_TIME_PROPERTY = 'publish_time'
 IS_RETWEET_PROPERTY = 'is_retweet'
 RETWEETER_PROPERTY = 'retweeter'
+TWEET_ID_RETWEETED_PROPERTY = 'tweet_id_retweeted'
 
 TWEET_XPATH_VERSIONS: dict = {
 
@@ -24,7 +25,8 @@ TWEET_XPATH_VERSIONS: dict = {
         PUBLISH_TIME_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div/div/section/div/div/div/div/div[1]/div/div/article/div/div/div[3]/div[4]/div/div[1]/div/div/a/time',
 
         IS_RETWEET_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div/div/section/div/div/div/div/div[1]/div/div/article/div/div/div[1]/div/div/div/div/div[2]/div/div/div',
-        RETWEETER_PROPERTY : '//*[@class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"]'
+        RETWEETER_PROPERTY : '//*[@class="css-4rbku5 css-18t94o4 css-901oao r-14j79pv r-1loqt21 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"]',
+        TWEET_ID_RETWEETED_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div/div/section/div/div/div/div/div[1]/div/div/article/div/div/div[3]/div[4]/div/div[1]/div/div/a'
     },
 
     'v2' : {
@@ -41,6 +43,7 @@ TWEET_XPATH_VERSIONS: dict = {
         PUBLISH_TIME_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div[1]/div/section/div/div/div[1]/div/div/article/div/div/div[3]/div[4]/div/div[1]/div/div/a/time',
 
         IS_RETWEET_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div[1]/div/section/div/div/div[1]/div/div/article/div/div/div[1]/div/div/div/div/div[2]/div/div/div',
-        RETWEETER_PROPERTY : '//*[@class="css-4rbku5 css-18t94o4 css-901oao r-1bwzh9t r-1loqt21 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"]'
+        RETWEETER_PROPERTY : '//*[@class="css-4rbku5 css-18t94o4 css-901oao r-1bwzh9t r-1loqt21 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0"]',
+        TWEET_ID_RETWEETED_PROPERTY : '/html/body/div/div/div[2]/main/div/div/div/div[1]/div/section/div/div/div[1]/div/div/article/div/div/div[3]/div[4]/div/div[1]/div/div/a'
     }
 }

@@ -3,7 +3,7 @@ import sys
 import logging
 import constants
 import tweet_versions
-from tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessImgElementException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
+from tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractTweetIdRetweeted, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessImgElementException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -39,6 +39,10 @@ class TweetParser:
 
             is_retweet: dict = self.extract_is_retweet(self.tweet_nodes[tweet_versions.IS_RETWEET_PROPERTY])
             retweeter: dict = self.extract_retweeter(self.tweet_nodes[tweet_versions.IS_RETWEET_PROPERTY])
+            tweet_id_retweeted : dict = self.extract_tweet_id_retweeted(
+                    is_retweet[constants.IS_RETWEET_PROPERTY],
+                    self.tweet_nodes[tweet_versions.TWEET_ID_RETWEETED_PROPERTY]
+            )
 
             tweet_content: dict = self.extract_tweet_content(self.tweet_nodes[tweet_versions.TWEET_DIV_PROPERTY])
             citing_to: dict = self.extract_citing_tweet(tweet_content[constants.CONTENT_PROPERTY])
@@ -47,7 +51,7 @@ class TweetParser:
 
             publish_time: dict = self.extract_publish_time(self.tweet_nodes[tweet_versions.PUBLISH_TIME_PROPERTY])
             
-            tweet = tweet | user_name | is_verified | tweet_content | citing_to |  language | activity_section | is_retweet | retweeter | publish_time
+            tweet = tweet | user_name | is_verified | tweet_content | citing_to |  language | activity_section | is_retweet | retweeter | tweet_id_retweeted | publish_time
 
             del self.tweet_id
             del self.tweet_tree
@@ -142,6 +146,21 @@ class TweetParser:
         except Exception as e:
             raise ExtractRetweeterException(f'Could not extract the retweeter of the tweet with ID {self.tweet_id}. Reason {e}')
     
+    def extract_tweet_id_retweeted(self, is_retweet: bool, section):
+
+        try:
+            if not is_retweet:
+                return {constants.TWEET_ID_RETWEETED_PROPERTY : None}
+            
+            a_element_tweet_id = section
+            href_tweet_status: str = a_element_tweet_id.attrib['href']
+            tweet_id_retweeted: str = href_tweet_status.split('/')[-1:][0]
+
+            return {constants.TWEET_ID_RETWEETED_PROPERTY : tweet_id_retweeted}
+
+        except Exception as e:
+            raise ExtractTweetIdRetweeted(f'Could not extract the ID of the tweet that is being retweeted of the tweet {self.tweet_id}. Reason {e}')
+
     def extract_language(self, section):
         try:
             language_section = section.get('lang') if section is not None else constants.NO_LANGUAGE
@@ -189,7 +208,7 @@ class TweetParser:
         if len(img_elements) > 0:
             multimedia_nodes = multimedia_nodes + img_elements
 
-        return multimedia_nodes
+        return list(set(multimedia_nodes))
 
     def extract_citing_tweet(self, tweet_content: str):
 
@@ -359,6 +378,7 @@ class TweetParser:
                     href = dom_element.text_content()
 
             if href is not None:
+                href = f' {href}'
                 tweet.append(href)
         except Exception as e:
             raise ProcessAElementException(f'Error when processing the links for the tweet with ID {self.tweet_id}. Reason {e}')

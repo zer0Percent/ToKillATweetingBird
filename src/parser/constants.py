@@ -19,6 +19,8 @@ CITATIONS_PROPERTY = 'citations'
 BOOKMARKS_PROPERTY = 'bookmarks'
 IS_RETWEET_PROPERTY = 'is_retweet'
 RETWEETER_PROPERTY = 'retweeter'
+TWEET_ID_RETWEETED_PROPERTY = 'tweet_id_retweeted'
+
 PUBLISH_TIME_PROPERTY = 'publish_time'
 
 NO_LANGUAGE = 'no_lang'

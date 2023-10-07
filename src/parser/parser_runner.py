@@ -64,6 +64,7 @@ class ParserRunner:
                     tweet_parsed[constants.BOOKMARKS_PROPERTY],
                     tweet_parsed[constants.IS_RETWEET_PROPERTY],
                     tweet_parsed[constants.RETWEETER_PROPERTY],
+                    tweet_parsed[constants.TWEET_ID_RETWEETED_PROPERTY],
                     tweet_parsed[constants.PUBLISH_TIME_PROPERTY]
                 )
                 

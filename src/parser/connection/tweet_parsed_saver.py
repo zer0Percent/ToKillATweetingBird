@@ -20,8 +20,8 @@ class TweetParsedSaver:
         try:
             save_tweet_query = '''
             INSERT INTO dbo.tweet(tweet_id, source_name, username, is_verified, tweet_content, citing_tweet_id, citing_to_user,
-                                tweet_language, retweets, likes, citations, bookmarks, is_retweet, retweeter, publish_time)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                tweet_language, retweets, likes, citations, bookmarks, is_retweet, retweeter, tweet_id_retweeted, publish_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
             '''
 
             self.cursor_destiny.execute(

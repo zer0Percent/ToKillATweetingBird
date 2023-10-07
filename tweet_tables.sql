@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS tweetmodeling.dbo.tweet
 (
 	tweet_id character varying(200) COLLATE pg_catalog."default" NOT NULL,
 	source_name character varying(100) COLLATE pg_catalog."default" NOT NULL DEFAULT ''::character varying,
- username text COLLATE pg_catalog."default" NOT NULL,
+    username text COLLATE pg_catalog."default" NOT NULL,
 	is_verified boolean NOT NULL DEFAULT FALSE,
 	tweet_content text COLLATE pg_catalog."default" NOT NULL,
 	citing_tweet_id character varying(200) COLLATE pg_catalog."default",
@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS tweetmodeling.dbo.tweet
 	bookmarks int NOT NULL DEFAULT 0,
 	is_retweet boolean NOT NULL DEFAULT FALSE,
 	retweeter text COLLATE pg_catalog."default",
+	tweet_id_retweeted character varying(200) COLLATE pg_catalog."default",
 	publish_time timestamp NOT NULL,
 	PRIMARY KEY (tweet_id, source_name)
 )
