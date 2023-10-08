@@ -9,13 +9,13 @@ from multiprocessing.pool import ThreadPool
 from src.scraper.connection.tweet_saver import TweetSaver
 from src.scraper.threading.threadmanager import ThreadManager
 from src.scraper.connection.thread_database import ThreadDatabase
-from src.scraper.tweet_retriever_thread import TweetRetrieverThread
-from src.scraper.tweet_retriever_exceptions import EmptyTweetException, GetTweetInBrowserException, PageIsDownException, WaitForTitleException, WaitForTweetDivException
+from src.scraper.retrievers.tweet.tweet_retriever_thread import TweetRetrieverThread
+from src.scraper.runners.exceptions.tweet_retriever_exceptions import EmptyTweetException, GetTweetInBrowserException, PageIsDownException, WaitForTitleException, WaitForTweetDivException
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-class ScraperRunner:
+class ScraperTweetRunner:
     def __init__(self,
             iterations_number: int,
             chunk_size: int,
@@ -43,7 +43,7 @@ class ScraperRunner:
 
         try:
             thread_manager = ThreadManager(thread_pool_connection=thread_database)
-            browser = ScraperRunner._get_browser(thread_manager=thread_manager)
+            browser = ScraperTweetRunner._get_browser(thread_manager=thread_manager)
 
             connection, cursor = thread_manager.get_database_connection()
             tweet_saver: TweetSaver = TweetSaver(connection=connection, cursor=cursor)
@@ -61,7 +61,7 @@ class ScraperRunner:
             while attempt_chunk < constants.ATTEMPTS_PER_CHUNK and len(candidate_tweets) > 0:
                 
                 random.shuffle(candidate_tweets)
-                pending_tweets_trial: set = ScraperRunner.trial_chunk_retrieval(
+                pending_tweets_trial: set = ScraperTweetRunner.trial_chunk_retrieval(
                     tweet_ids=candidate_tweets,
                     data_source = data_source,
                     tweet_retriever_thread=tweet_retriever_thread,
@@ -76,7 +76,7 @@ class ScraperRunner:
 
                 logging.info(f'[ITERATION: {iteration}][CHUNK ATTEMPT {attempt_chunk}] Chunk finished. Renewing browser...')
                 thread_manager.close_browser()
-                browser = ScraperRunner._get_browser(thread_manager=thread_manager)
+                browser = ScraperTweetRunner._get_browser(thread_manager=thread_manager)
                 tweet_retriever_thread.set_browser(browser)
 
             thread_manager.dispose_from_pool()
@@ -144,7 +144,7 @@ class ScraperRunner:
                 tweet_time_iter = tweet_time
 
                 logging.info(f'[ITERATION {i}] Compute timings for ITERATION...')
-                title_time_iter, tweet_time_iter = ScraperRunner._compute_timings(
+                title_time_iter, tweet_time_iter = ScraperTweetRunner._compute_timings(
                         iteration=i,
                         total_iterations=self.iterations_number,
                         title_time=title_time_iter,
@@ -162,8 +162,8 @@ class ScraperRunner:
                 random.shuffle(dataset)
 
                 thread_db: ThreadDatabase = ThreadDatabase(self.threads)
-                chunks = ScraperRunner._chunk_dataset(dataset, self.chunk_size)
-                args = ScraperRunner._build_arguments(
+                chunks = ScraperTweetRunner._chunk_dataset(dataset, self.chunk_size)
+                args = ScraperTweetRunner._build_arguments(
                     chunk_tweets=chunks,
                     thread_database=thread_db,
                     data_source=self.data_source,
@@ -173,7 +173,7 @@ class ScraperRunner:
                 )
 
                 start = time.time()
-                ThreadPool(self.threads).starmap(ScraperRunner.scrape, args)
+                ThreadPool(self.threads).starmap(ScraperTweetRunner.scrape, args)
                 end = time.time()
                     
                 logging.info(f'[ITERATION {i}] ETA: {end - start}')

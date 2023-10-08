@@ -1,6 +1,6 @@
 
 import argparse
-from src.scraper.scraper_runner import ScraperRunner
+from src.scraper.runners.tweet.scraper_tweet_runner import ScraperTweetRunner
 
 if __name__ == '__main__':
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     if tweet_ids_path and source:
 
-        runner = ScraperRunner(
+        runner = ScraperTweetRunner(
             iterations_number=iterations,
             chunk_size=chunk_size,
             threads=threads,
