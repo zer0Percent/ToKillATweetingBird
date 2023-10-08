@@ -1,7 +1,7 @@
 import sys
 import logging
 from selenium.webdriver.common.by import By
-import src.scraper.constants as constants
+import src.scraper.runners.tweet.constants as constants
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from src.scraper.runners.exceptions.tweet_retriever_exceptions import EmptyTweetException, GetTweetInBrowserException, PageIsDownException, WaitForTitleException, WaitForTweetDivException

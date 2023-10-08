@@ -2,7 +2,7 @@ import sys
 import logging
 import psycopg2
 from config import settings
-from src.scraper import constants
+from src.scraper.runners.tweet import constants
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 class TweetSaver:

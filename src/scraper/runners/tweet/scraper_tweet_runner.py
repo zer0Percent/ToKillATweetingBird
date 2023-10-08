@@ -4,7 +4,7 @@ import random
 import logging
 import pandas as pd
 from config import settings
-import src.scraper.constants as constants
+import src.scraper.runners.tweet.constants as constants
 from multiprocessing.pool import ThreadPool
 from src.scraper.connection.tweet_saver import TweetSaver
 from src.scraper.threading.threadmanager import ThreadManager

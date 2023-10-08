@@ -1,7 +1,7 @@
 import psycopg2
 import threading
 from selenium import webdriver
-from src.scraper import constants
+from src.scraper.runners.tweet import constants
 from fake_useragent import UserAgent
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
