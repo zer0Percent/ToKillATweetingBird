@@ -28,6 +28,17 @@ CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawtweet
   PRIMARY KEY (tweet_id, source_name)
 );
 
+CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawuser
+( 
+  id SERIAL PRIMARY KEY,
+  username varchar(200) UNIQUE,
+  is_empty BOOLEAN NOT NULL DEFAULT FALSE,
+  is_retrieved BOOLEAN NOT NULL DEFAULT FALSE,
+  user_content BYTEA NOT NULL DEFAULT '',
+  parsed BOOLEAN NOT NULL DEFAULT FALSE,
+);
+
+
 CREATE TABLE IF NOT EXISTS tweetdata.dbo.preloaded_dataset
 (
     dataset_name character varying(200) COLLATE pg_catalog."default" NOT NULL,

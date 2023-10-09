@@ -1,7 +1,6 @@
 import psycopg2
 import threading
 from selenium import webdriver
-from src.scraper.runners.tweet import constants
 from fake_useragent import UserAgent
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
@@ -22,19 +21,20 @@ class ThreadManager:
             fallback='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/116.0'
         )
 
-    def get_browser(self, type: str):
+    def get_browser(self, type: str, is_eager: bool = False):
 
         driver = getattr(self.thread_local, 'driver', None)
         
         if driver is None:
 
-            options: ChromeOptions | FirefoxOptions = self.generate_common_options(type)
+            options: ChromeOptions | FirefoxOptions = self.generate_common_options(type, is_eager)
             driver = self._get_browser_type(type, options)
+
             setattr(self.thread_local, 'driver', driver)
 
         return driver
     
-    def generate_common_options(self, type: str):
+    def generate_common_options(self, type: str, is_eager: bool):
 
         options = None
 
@@ -44,13 +44,15 @@ class ThreadManager:
             options.set_preference("general.useragent.override", self.used_user_agent)
             options.set_preference('intl.accept_languages', 'en-GB')
             options.add_argument("--log-level=3")
+            options.add_argument('-private')
         else:
             options = ChromeOptions()
+            if is_eager:
+                options.page_load_strategy='eager'
             options.add_argument("window-size=1280,800")
             options.add_argument(f"user-agent={self.used_user_agent}")
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_argument("--log-level=3")
-
         options.add_argument('--headless')
 
         return options
@@ -58,9 +60,9 @@ class ThreadManager:
     def _get_browser_type(self, type: str, options: FirefoxOptions | ChromeOptions):
 
         if type == 'firefox':
-            return webdriver.Firefox(service=FirefoxService(constants.WEBDRIVER_PATH_FIREFOX), options=options)
+            return webdriver.Firefox(service=FirefoxService('./geckodriver'), options=options)
         else:
-            return webdriver.Chrome(service=ChromeService(constants.WEBDRIVER_PATH_CHROME), options=options)
+            return webdriver.Chrome(service=ChromeService('./chromedriver'), options=options)
 
     def close_browser(self):
         driver = getattr(self.thread_local, 'driver')
