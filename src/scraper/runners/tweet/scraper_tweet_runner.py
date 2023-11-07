@@ -191,44 +191,54 @@ class ScraperTweetRunner:
         successful: set = set()
         for tweet_id in tweet_ids:
             
-            try:
-                tweet_scraped = tweet_retriever_thread.scrape_tweet(
-                    tweet_id = tweet_id
-                )
-                tweet_saver.update_retrieved_tweet(tweet_id=tweet_id,
-                                                data_source=data_source,
-                                                content= tweet_scraped.encode('utf-8'))
-                tweet_saver.commit_changes()
+            tweet_attempt: int = 0
+            tweet_attempt_info: str = f'[TWEET ATTEMPT: {tweet_attempt}]'
 
-                successful.add(tweet_id)
-                logging.info(f'{iteration_attempt_info} Tweet saved with URL: {constants.TWEET_BASE_URL}{tweet_id}')
+            while tweet_attempt < constants.TWEET_ATTEMPT_THRESHOLD:
+                try:
+                    tweet_scraped = tweet_retriever_thread.scrape_tweet(
+                        tweet_id = tweet_id
+                    )
+                    tweet_saver.update_retrieved_tweet(tweet_id=tweet_id,
+                                                    data_source=data_source,
+                                                    content= tweet_scraped.encode('utf-8'))
+                    tweet_saver.commit_changes()
 
-            except EmptyTweetException as empty_tweet_e:
-                tweet_saver.update_empty_tweet(
-                    tweet_id=tweet_id,
-                    data_source=data_source
-                )
-                tweet_saver.commit_changes()
+                    successful.add(tweet_id)
+                    logging.info(f'{iteration_attempt_info}{tweet_attempt_info} Tweet saved with URL: {constants.TWEET_BASE_URL}{tweet_id}')
+                    tweet_attempt = constants.TWEET_ATTEMPT_THRESHOLD
 
-                successful.add(tweet_id)
-                logging.info(f'{iteration_attempt_info} {empty_tweet_e.message}. Adding it to the empty tweets.')
-                    
-            except GetTweetInBrowserException as get_tweet_e:
-                logging.error(f'{iteration_attempt_info} {get_tweet_e.message}')
+                except EmptyTweetException as empty_tweet_e:
+                    tweet_saver.update_empty_tweet(
+                        tweet_id=tweet_id,
+                        data_source=data_source
+                    )
+                    tweet_saver.commit_changes()
 
-            except WaitForTitleException as e:
-                logging.error(f'{iteration_attempt_info} {str(e.message)} ')
+                    successful.add(tweet_id)
+                    logging.info(f'{iteration_attempt_info}{tweet_attempt_info} {empty_tweet_e.message}. Adding it to the empty tweets.')
 
-            except WaitForTweetDivException as e:
-                logging.error(f'{iteration_attempt_info} {str(e.message)}')
+                    tweet_attempt = constants.TWEET_ATTEMPT_THRESHOLD
 
-            except PageIsDownException as e:
-                logging.info(f'{iteration_attempt_info} {e.message} Sleeping thread for {constants.WAIT_TIME_PAGE_DOWN} seconds')
-                time.sleep(constants.WAIT_TIME_PAGE_DOWN)
-                logging.info(f'{iteration_attempt_info} Waking up thread from down page')
-            
-            except Exception as e:
-                logging.error(f'{iteration_attempt_info} Reason {e}')
+                except GetTweetInBrowserException as get_tweet_e:
+                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {get_tweet_e.message}')
+
+                except WaitForTitleException as e:
+                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {str(e.message)} ')
+
+                except WaitForTweetDivException as e:
+                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {str(e.message)}')
+
+                except PageIsDownException as e:
+                    logging.info(f'{iteration_attempt_info}{tweet_attempt_info} {e.message} Sleeping thread for {constants.WAIT_TIME_PAGE_DOWN} seconds')
+                    time.sleep(constants.WAIT_TIME_PAGE_DOWN)
+                    logging.info(f'{iteration_attempt_info}{tweet_attempt_info} Waking up thread from down page')
+
+                except Exception as e:
+                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} Reason {e}')
+
+                finally:
+                    tweet_attempt += 1
 
         tweet_saver.commit_changes()
         return list(set(tweet_ids).difference(successful))
