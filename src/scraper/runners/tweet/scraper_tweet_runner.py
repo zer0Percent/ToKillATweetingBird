@@ -192,7 +192,7 @@ class ScraperTweetRunner:
         for tweet_id in tweet_ids:
             
             tweet_attempt: int = 0
-            tweet_attempt_info: str = f'[TWEET ATTEMPT: {tweet_attempt}]'
+            tweet_attempt_info: str = f'[TWEET ATTEMPT: {tweet_attempt + 1}]'
 
             while tweet_attempt < constants.TWEET_ATTEMPT_THRESHOLD:
                 try:
