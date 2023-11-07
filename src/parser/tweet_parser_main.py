@@ -1,5 +1,5 @@
 import argparse
-from parser_runner import ParserRunner
+from src.parser.tweet.parser_runner import TweetParserRunner
 
 if __name__ == '__main__':
 
@@ -9,5 +9,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_source = args.dataset_name
 
-    parse_runner = ParserRunner()
+    parse_runner = TweetParserRunner()
     parse_runner.start(data_source)
