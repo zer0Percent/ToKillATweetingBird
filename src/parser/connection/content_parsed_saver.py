@@ -1,6 +1,7 @@
 import psycopg2
 from connection.config_parser import settings
-from tweet.tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException, PersistingUserException, UpdateParsedStatusException
+from user.user_parser_exceptions import PersistingUserException
+from tweet.tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException, UpdateParsedStatusException
 
 class ContentParsedSaver:
     def __init__(self):
