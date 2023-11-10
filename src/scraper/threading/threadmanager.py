@@ -49,7 +49,7 @@ class ThreadManager:
             options = ChromeOptions()
             if is_eager:
                 options.page_load_strategy='eager'
-            options.add_argument("window-size=1280,800")
+            options.add_argument("window-size=1920,1080")
             options.add_argument(f"user-agent={self.used_user_agent}")
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_argument("--log-level=3")

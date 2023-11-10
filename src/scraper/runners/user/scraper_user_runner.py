@@ -10,7 +10,8 @@ from src.scraper.connection.user_saver import UserSaver
 from src.scraper.threading.threadmanager import ThreadManager
 from src.scraper.connection.thread_database import ThreadDatabase
 from src.scraper.retrievers.user.user_retriever_thread import UserRetrieverThread
-from src.scraper.runners.exceptions.user_retriever_exceptions import NoExistsUserException, GetUserInBrowserException, WaitForTitleException, WaitForUserDescriptionException, WaitForUserIdException
+from src.scraper.runners.exceptions.user_retriever_exceptions import NoExistsUserException, GetUserInBrowserException, PageIsDownException, WaitForUserNameException
+
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -180,45 +181,47 @@ class ScraperUserRunner:
         successful: set = set()
         for username in usernames:
             
-            try:
-                user_scraped = user_retriever_thread.scrape_user(
-                    username=username
-                )
-                user_saver.update_retrieved_user(username=username,
-                                                content= user_scraped.encode('utf-8'))
-                user_saver.commit_changes()
+            attempt: int = 0
+            while attempt < constants.ATTEMPT_USER_THRESHOLD:
+                user_attempt_info: str = f'[USER ATTEMPT: {attempt + 1}]'
+                try:
+                    user_scraped = user_retriever_thread.scrape_user(
+                        username=username
+                    )
+                    user_saver.update_retrieved_user(username=username,
+                                                    content= user_scraped.encode('utf-8'))
+                    user_saver.commit_changes()
 
-                successful.add(username)
-                logging.info(f'{iteration_attempt_info} User saved with URL: {constants.USER_BASE_URL.format(username=username)}')
+                    successful.add(username)
+                    logging.info(f'{iteration_attempt_info}{user_attempt_info} User saved with URL: {constants.USER_BASE_URL.format(username=username)}')
+                    attempt = constants.ATTEMPT_USER_THRESHOLD
 
-            except NoExistsUserException as empty_user_e:
-                user_saver.update_empty_user(
-                    username=username
-                )
-                user_saver.commit_changes()
+                except NoExistsUserException as empty_user_e:
+                    user_saver.update_empty_user(
+                        username=username
+                    )
+                    user_saver.commit_changes()
 
-                successful.add(username)
-                logging.info(f'{iteration_attempt_info} {empty_user_e.message}. Adding it to the empty users.')
+                    successful.add(username)
+                    logging.info(f'{iteration_attempt_info}{user_attempt_info} {empty_user_e.message}. Adding it to the empty users.')
+                    attempt = constants.ATTEMPT_USER_THRESHOLD
 
-            except GetUserInBrowserException as get_user_e:
-                logging.error(f'{iteration_attempt_info} {get_user_e.message}')
+                except GetUserInBrowserException as get_user_e:
+                    logging.error(f'{iteration_attempt_info}{user_attempt_info} {get_user_e.message}')
 
-            except WaitForTitleException as e:
-                logging.error(f'{iteration_attempt_info} {str(e.message)} ')
-
-            except WaitForUserDescriptionException as e:
-                logging.error(f'{iteration_attempt_info} {str(e.message)}')
-
-            except WaitForUserIdException as e:
-                logging.error(f'{iteration_attempt_info} {str(e.message)}')
+                except WaitForUserNameException as e:
+                    logging.error(f'{iteration_attempt_info}{user_attempt_info} {str(e.message)} ')
+                    
+                except PageIsDownException as e:
+                    logging.info(f'{iteration_attempt_info}{user_attempt_info} {e.message} Sleeping thread for {constants.WAIT_TIME_PAGE_DOWN} seconds')
+                    time.sleep(constants.WAIT_TIME_PAGE_DOWN)
+                    logging.info(f'{iteration_attempt_info}{user_attempt_info} Waking up thread from down page')
                 
-            # except PageIsDownException as e:
-            #     logging.info(f'{iteration_attempt_info} {e.message} Sleeping thread for {constants.WAIT_TIME_PAGE_DOWN} seconds')
-            #     time.sleep(constants.WAIT_TIME_PAGE_DOWN)
-            #     logging.info(f'{iteration_attempt_info} Waking up thread from down page')
-            
-            except Exception as e:
-                logging.error(f'{iteration_attempt_info} Reason {e}')
+                except Exception as e:
+                    logging.error(f'{iteration_attempt_info}{user_attempt_info} Reason {e}')
+
+                finally:
+                    attempt += 1
 
         user_saver.commit_changes()
         return list(set(usernames).difference(successful))

@@ -54,23 +54,27 @@ class UserParserRunner:
 
                 user_parsed: dict = user_parser.parse_user()
                 
-                tuple_user_parsed = (
-                    user_parsed[user_versions.USERNAME_PROPERTY],
-                    user_parsed[user_versions.DISPLAYED_NAME_PROPERTY],
-                    user_parsed[user_versions.IS_VERIFIED_PROPERTY],
-                    user_parsed[user_versions.VERIFIED_TYPE_PROPERTY],
-                    user_parsed[user_versions.IS_PRIVATE_PROPERTY],
-                    user_parsed[user_versions.BIOGRAPHY_PROPERTY],
-                    user_parsed[user_versions.CATEGORY_PROPERTY],
-                    user_parsed[user_versions.LOCATION_PROPERTY],
-                    user_parsed[user_versions.LINK_PROPERTY],
-                    user_parsed[user_versions.JOIN_DATE_PROPERTY],
-                    user_parsed[user_versions.FOLLOWINGS_PROPERTY],
-                    user_parsed[user_versions.FOLLOWERS_PROPERTY],
-                    user_parsed[user_versions.POSTS_COUNT_PROPERTY]
-                )
-                
-                self.user_saver.save_user(tuple_user_parsed, id)
+                if user_parsed is not None:
+                    tuple_user_parsed = (
+                        user_parsed[user_versions.USERNAME_PROPERTY],
+                        user_parsed[user_versions.DISPLAYED_NAME_PROPERTY],
+                        user_parsed[user_versions.IS_VERIFIED_PROPERTY],
+                        user_parsed[user_versions.VERIFIED_TYPE_PROPERTY],
+                        user_parsed[user_versions.IS_PRIVATE_PROPERTY],
+                        user_parsed[user_versions.BIOGRAPHY_PROPERTY],
+                        user_parsed[user_versions.CATEGORY_PROPERTY],
+                        user_parsed[user_versions.LOCATION_PROPERTY],
+                        user_parsed[user_versions.LINK_PROPERTY],
+                        user_parsed[user_versions.JOIN_DATE_PROPERTY],
+                        user_parsed[user_versions.FOLLOWINGS_PROPERTY],
+                        user_parsed[user_versions.FOLLOWERS_PROPERTY],
+                        user_parsed[user_versions.POSTS_COUNT_PROPERTY]
+                    )
+                    
+                    self.user_saver.save_user(tuple_user_parsed, id)
+                    # logging.info(f'User {username} saved.')
+                else:
+                    self.user_saver.update_parsed(id)
 
                 parsed_users += 1
 
