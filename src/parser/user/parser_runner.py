@@ -1,11 +1,10 @@
 import sys
 import logging
 from lxml import  html
-from connection.content_parsed_saver import ContentParsedSaver
-from src.parser.tweet.tweet_parser_exceptions import PersistingUserException
 from user import user_versions
 from user.user_parser import UserParser
-from user.user_parser_exceptions import GetRawUsersException, ParseUserException
+from connection.content_parsed_saver import ContentParsedSaver
+from user.user_parser_exceptions import GetRawUsersException, ParseUserException, PersistingUserException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
