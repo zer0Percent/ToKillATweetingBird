@@ -4,14 +4,14 @@ import tweet_versions
 from lxml import  html
 from tweet_parser import TweetParser
 import src.parser.tweet.constants as constants
-from connection.tweet_parsed_saver import TweetParsedSaver
+from connection.content_parsed_saver import ContentParsedSaver
 from tweet_parser_exceptions import ParseTweetException, TweetVersioningException, PersistingTweetException, GetRawTweetsException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 class TweetParserRunner:
     def __init__(self) -> None:
-        self.tweet_saver: TweetParsedSaver = TweetParsedSaver()
+        self.tweet_saver: ContentParsedSaver = ContentParsedSaver()
     
     def start(self, data_source: str):
 
@@ -30,7 +30,7 @@ class TweetParserRunner:
                 del raw_tweets
 
         except GetRawTweetsException as e:
-            logging.error(f'{e.message} Clossing tool.')
+            logging.error(f'{e.message} Closing tool.')
         except Exception as e:
             logging.error(f'Could not insert the tweets. Closing tool. Reason: {e}')
     

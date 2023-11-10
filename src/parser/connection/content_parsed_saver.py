@@ -1,8 +1,8 @@
 import psycopg2
 from connection.config_parser import settings
-from tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException, UpdateParsedStatusException
+from tweet.tweet_parser_exceptions import GetRawTweetsException, PersistingTweetException, PersistingUserException, UpdateParsedStatusException
 
-class TweetParsedSaver:
+class ContentParsedSaver:
     def __init__(self):
         self.connection_source: psycopg2.connection = psycopg2.connect(
             **settings.database_parameters.connection
@@ -46,6 +46,37 @@ class TweetParsedSaver:
             self.connection_source.commit()
             self.connection_destiny.commit()
             raise PersistingTweetException(f'Could not save the tweet with ID {tweet_parsed[0]}. Reason: {e}')
+
+    def save_user(self, user_parsed: tuple, rawuser_id: int):
+
+        try:
+        
+            save_user_query = '''
+            INSERT INTO dbo.user(username, displayed_name, is_verified, verified_type, is_private, biography, category, location, link, join_date, followings, followers, posts_count)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            '''
+
+            self.cursor_destiny.execute(
+                save_user_query, user_parsed
+            )
+
+            self.connection_destiny.commit()
+
+            update_parsed_query = ''' 
+            UPDATE dbo.rawuser
+            SET parsed = TRUE
+            WHERE
+                id=%s;
+            '''
+
+            self.cursor_source.execute(
+                update_parsed_query, (rawuser_id, )
+            )
+            self.connection_source.commit()
+        except Exception as e:
+            self.connection_source.commit()
+            self.connection_destiny.commit()
+            raise PersistingUserException(f'Could not save the user with username {user_parsed[0]}. Reason: {e}')
     
     def update_parsed_status(self, tweet_id: str, data_source: str):
 
@@ -82,6 +113,39 @@ class TweetParsedSaver:
         except Exception as e:
             raise GetRawTweetsException(f'Could not retrieve the raw tweets for the source {data_source}. Reason {e}.')
     
+    def get_raw_users(self):
+        try:
+            raw_users_query = ''' 
+            SELECT id, username, user_content from dbo.rawuser
+            WHERE is_empty=FALSE AND is_retrieved=TRUE and parsed=FALSE LIMIT 500;
+            '''
+            # private: typdertweetet
+            # blue verified: realDonaldTrump
+            # gold: verge
+            # no verified: mousterpiece
+            # govern: GovMurphy
+             # rare case: LeePhillipCruz
+             # other case: MedicalTool
+             # another one: MedicalBriefs
+             # in ('typdertweetet', 'realDonaldTrump', 'verge', 'mousterpiece', 'GovMurphy', 'LeePhillipCruz', 'MedicalTool', 'MedicalBriefs')
+            # raw_users_query = ''' 
+            # SELECT username, user_content from dbo.rawuser
+            # WHERE username in ('typdertweetet', 'realDonaldTrump', 'verge', 'mousterpiece', 'GovMurphy', 'LeePhillipCruz', 'MedicalTool', 'MedicalBriefs');
+            # '''
+            self.cursor_source.execute(raw_users_query)
+            self.connection_source.commit()
+
+            result = self.cursor_source.fetchall()
+
+            return result
+        
+        except Exception as e:
+            raise GetRawTweetsException(f'Could not retrieve the raw users. Reason {e}.')
+
     def close_connection_destiny(self):
         self.cursor_destiny.close()
         self.connection_destiny.close()
+
+    def close_connection_source(self):
+        self.cursor_source.close()
+        self.connection_source.close()
