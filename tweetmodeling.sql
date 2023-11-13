@@ -1,13 +1,3 @@
-CREATE DATABASE IF NOT EXISTS tweetdata
-    WITH
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'C'
-    LC_CTYPE = 'C'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
-
 CREATE DATABASE IF NOT EXISTS tweetmodeling
     WITH
     OWNER = postgres
@@ -18,34 +8,8 @@ CREATE DATABASE IF NOT EXISTS tweetmodeling
     CONNECTION LIMIT = -1
     IS_TEMPLATE = False;
 
-CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawtweet
-( tweet_id varchar(200),
-  source_name varchar(100) DEFAULT '',
-  is_empty BOOLEAN NOT NULL DEFAULT FALSE,
-  is_retrieved BOOLEAN NOT NULL DEFAULT FALSE,
-  tweet_content BYTEA NOT NULL DEFAULT '',
-  parsed BOOLEAN NOT NULL DEFAULT FALSE,
-  PRIMARY KEY (tweet_id, source_name)
-);
 
-CREATE TABLE IF NOT EXISTS tweetdata.dbo.rawuser
-( 
-  id SERIAL PRIMARY KEY,
-  username varchar(200) UNIQUE,
-  is_empty BOOLEAN NOT NULL DEFAULT FALSE,
-  is_retrieved BOOLEAN NOT NULL DEFAULT FALSE,
-  user_content BYTEA NOT NULL DEFAULT '',
-  parsed BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-
-CREATE TABLE IF NOT EXISTS tweetdata.dbo.preloaded_dataset
-(
-    dataset_name character varying(200) COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT dataset_name_pkey PRIMARY KEY (dataset_name)
-)
-
-CREATE TABLE IF NOT EXISTS tweetmodeling.dbo.tweet
+CREATE TABLE IF NOT EXISTS dbo.tweet
 (
 	tweet_id character varying(200) COLLATE pg_catalog."default" NOT NULL,
 	source_name character varying(100) COLLATE pg_catalog."default" NOT NULL DEFAULT ''::character varying,
@@ -64,4 +28,26 @@ CREATE TABLE IF NOT EXISTS tweetmodeling.dbo.tweet
 	tweet_id_retweeted character varying(200) COLLATE pg_catalog."default",
 	publish_time timestamp NOT NULL,
 	PRIMARY KEY (tweet_id, source_name)
+)
+
+CREATE TABLE IF NOT EXISTS dbo.user
+(
+    id SERIAL,
+    username character varying(200) COLLATE pg_catalog."default",
+    displayed_name text COLLATE pg_catalog."default" NOT NULL,
+    is_verified boolean NOT NULL,
+    verified_type character varying(50) COLLATE pg_catalog."default",
+    is_private boolean NOT NULL,
+	
+    biography text COLLATE pg_catalog."default",
+    category text COLLATE pg_catalog."default",
+    location text COLLATE pg_catalog."default",
+    link text COLLATE pg_catalog."default",
+	
+    join_date timestamp without time zone NOT NULL,
+    followings integer NOT NULL,
+    followers integer NOT NULL,
+    posts_count integer NOT NULL,
+    CONSTRAINT user_pkey PRIMARY KEY (id),
+    CONSTRAINT user_username_key UNIQUE (username)
 )
