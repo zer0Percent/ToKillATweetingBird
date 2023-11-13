@@ -4,3 +4,4 @@ dynaconf
 psycopg2-binary
 lxml
 fake-useragent~=1.2.1
+beautifulsoup4
