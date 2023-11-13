@@ -192,9 +192,9 @@ class ScraperTweetRunner:
         for tweet_id in tweet_ids:
             
             tweet_attempt: int = 0
-            tweet_attempt_info: str = f'[TWEET ATTEMPT: {tweet_attempt + 1}]'
 
             while tweet_attempt < constants.TWEET_ATTEMPT_THRESHOLD:
+                tweet_attempt_info: str = f'[TWEET ATTEMPT: {tweet_attempt + 1}]'
                 try:
                     tweet_scraped = tweet_retriever_thread.scrape_tweet(
                         tweet_id = tweet_id
@@ -207,7 +207,7 @@ class ScraperTweetRunner:
                     successful.add(tweet_id)
                     logging.info(f'{iteration_attempt_info}{tweet_attempt_info} Tweet saved with URL: {constants.TWEET_BASE_URL}{tweet_id}')
                     tweet_attempt = constants.TWEET_ATTEMPT_THRESHOLD
-
+                    
                 except EmptyTweetException as empty_tweet_e:
                     tweet_saver.update_empty_tweet(
                         tweet_id=tweet_id,
