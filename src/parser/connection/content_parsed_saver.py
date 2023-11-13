@@ -78,6 +78,19 @@ class ContentParsedSaver:
             self.connection_source.commit()
             self.connection_destiny.commit()
             raise PersistingUserException(f'Could not save the user with username {user_parsed[0]}. Reason: {e}')
+        
+    def update_parsed(self, id):
+            update_parsed_query = ''' 
+            UPDATE dbo.rawuser
+            SET parsed = TRUE
+            WHERE
+                id=%s;
+            '''
+
+            self.cursor_source.execute(
+                update_parsed_query, (id, )
+            )
+            self.connection_source.commit()
     
     def update_parsed_status(self, tweet_id: str, data_source: str):
 
@@ -120,19 +133,6 @@ class ContentParsedSaver:
             SELECT id, username, user_content from dbo.rawuser
             WHERE is_empty=FALSE AND is_retrieved=TRUE and parsed=FALSE LIMIT 500;
             '''
-            # private: typdertweetet
-            # blue verified: realDonaldTrump
-            # gold: verge
-            # no verified: mousterpiece
-            # govern: GovMurphy
-             # rare case: LeePhillipCruz
-             # other case: MedicalTool
-             # another one: MedicalBriefs
-             # in ('typdertweetet', 'realDonaldTrump', 'verge', 'mousterpiece', 'GovMurphy', 'LeePhillipCruz', 'MedicalTool', 'MedicalBriefs')
-            # raw_users_query = ''' 
-            # SELECT username, user_content from dbo.rawuser
-            # WHERE username in ('typdertweetet', 'realDonaldTrump', 'verge', 'mousterpiece', 'GovMurphy', 'LeePhillipCruz', 'MedicalTool', 'MedicalBriefs');
-            # '''
             self.cursor_source.execute(raw_users_query)
             self.connection_source.commit()
 
