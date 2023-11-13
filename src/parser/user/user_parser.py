@@ -1,119 +1,156 @@
-import user.user_versions as user_versions
+from lxml import html
+from bs4 import BeautifulSoup
 from datetime import datetime
-from user.user_parser_exceptions import ConvertNumberToIntegerException, ExtractAccountStatusException, ExtractBiographyException, ExtractCategoryException, ExtractFollowingsFollowersException, ExtractHeaderProfileException, ExtractJoinDateException, ExtractLinkException, ExtractLocationException, ExtractPostsCountException, ParseUserException, ExtractUserException, ProcessEmojiException, ProcessHashtagException, ProcessLinkException, ProcessMentionException, ProcessTextException
+import user.user_versions as user_versions
+from user.user_parser_exceptions import ConvertNumberToIntegerException, ExtractBiographyException, ExtractCategoryException, ExtractJoinDateException, ExtractLinkException, ExtractLocationException, NoXPathFoundException, ParseUserException, ExtractUserException, ProcessEmojiException, ProcessHashtagException, ProcessLinkException, ProcessMentionException, ProcessTextException
 
+import logging
+import sys
+file_handler = logging.FileHandler(filename='alternative_url.log')
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+
+handlers = [file_handler, stdout_handler]
+logging.basicConfig(
+    level=logging.INFO, 
+    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=handlers
+)
+logger=logging.getLogger('LOGGER_NAME')
 
 class UserParser:
     
-    def __init__(self, username: str, user_tree, xpaths: dict):
+    def __init__(self, username: str, content: str, xpaths: dict):
         self.username: str = username
-        self.user_tree = user_tree
-        self.user_nodes: dict = self._parse_html_nodes(xpaths)
+        self.content: str = content
+        self.xpaths: dict = xpaths
 
-    def _parse_html_nodes(self, xpaths: dict):
-        content_dict = dict()
-
-        for user_section, xpath in xpaths[user_versions.XPATHS].items():
-            content_dict[user_section] = self._get_user_node(xpath)
-
-        if content_dict[user_versions.BIOGRAPHY_PROPERTY] is None:
-            content_dict[user_versions.PROFILE_HEADER_ITEMS] = self._get_user_node(xpaths[user_versions.HEADER_ITEM_XPATHS_ALTERNATIVES][user_versions.PROFILE_HEADER_ITEMS])
-
-        if content_dict[user_versions.FOLLOWINGS_PROPERTY] is None:
-
-            for following_exception_xpath in xpaths[user_versions.FOLLOWING_EXCEPTIONS][user_versions.FOLLOWINGS_PROPERTY]:
-                node_following = self._get_user_node(following_exception_xpath)
-                if node_following is not None:
-                    content_dict[user_versions.FOLLOWINGS_PROPERTY] = node_following
-                    break
-
-        if content_dict[user_versions.FOLLOWERS_PROPERTY] is None:
-
-            for follower_exception_xpath in xpaths[user_versions.FOLLOWER_EXCEPTIONS][user_versions.FOLLOWERS_PROPERTY]:
-                node_follower = self._get_user_node(follower_exception_xpath)
-                if node_follower is not None:
-                    content_dict[user_versions.FOLLOWERS_PROPERTY] = node_follower
-                    break
-
-        return content_dict
+        self.user_tree = html.fromstring(self.content)
     
+    def _find_user_node(self, xpaths: list):
+        for xpath in xpaths:
+            user_node = self._get_user_node(xpath)
+            if user_node is not None:
+                return user_node
+
     def _get_user_node(self, xpath: str):
         try:
             return self.user_tree.xpath(xpath)[0]
         except Exception as e:
             return None
     
+    def _sanity_check_of(self, section: str, content: str):
+
+        if section not in user_versions.DATA_LOCATORS.keys():
+            return False
+
+        soup = BeautifulSoup(content, 'html.parser')
+        element = soup.find(attrs={'data-testid' : user_versions.DATA_LOCATORS[section]})
+        return element is not None
+    
     def parse_user(self):
 
         try:
 
-            user_name: dict = self.extract_user_name(self.user_nodes[user_versions.USERNAME_PROPERTY])
-            displayed_name: dict = self.extract_displayed_name(self.user_nodes[user_versions.DISPLAYED_NAME_PROPERTY])
-            account_status: dict = self.extract_account_status(self.user_nodes[user_versions.ACCOUNT_STATUS_ITEMS])
+            user_name: dict = self.extract_user_name()
+            displayed_name: dict = self.extract_displayed_name()
+            account_status: dict = self.extract_account_status()
 
-            biography: dict = self.extract_biography(self.user_nodes[user_versions.BIOGRAPHY_PROPERTY])
+            biography: dict = self.extract_biography()
 
-            profile_header: dict = self.extract_profile_header(self.user_nodes[user_versions.PROFILE_HEADER_ITEMS])
+            profile_header: dict = self.extract_profile_header()
 
-            followings: dict = self.extract_followings(self.user_nodes[user_versions.FOLLOWINGS_PROPERTY])
-            followers: dict = self.extract_followers(self.user_nodes[user_versions.FOLLOWERS_PROPERTY])
-            posts_count: dict = self.extract_posts_count(self.user_nodes[user_versions.POSTS_COUNT_PROPERTY])
+            followings: dict = self.extract_followings()
+            followers: dict = self.extract_followers()
+            posts_count: dict = self.extract_posts_count()
 
             user = user_name | displayed_name | account_status | biography | profile_header | followings | followers | posts_count
 
             del self.username
             del self.user_tree
-            del self.user_nodes
 
             return user
         
         except ParseUserException as e:
             raise e
-        
+
         except Exception as e:
-            print(self.user_nodes)
             raise e
         
-    def extract_user_name(self, section):
-        try:
-            return {user_versions.USERNAME_PROPERTY : section.text_content()}
-        except Exception as e:
-            raise ExtractUserException(f'Could not extract the user name of {self.username}. Reason {e} ')
+    def extract_user_name(self):
+
+        property: str = user_versions.USERNAME_PROPERTY
+        xpaths_user_section: list = self.xpaths[property]
+        for xpath in xpaths_user_section:
+            try:
+                user_node = self._get_user_node(xpath)
+                if user_node is not None:
+                    username: str = user_node.text_content()
+                    return {property : username}
+            except Exception as e:
+                logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}')
+            
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
         
-    def extract_displayed_name(self, section):
-        try:
-            name_elements: list = section.getchildren()
+        raise ExtractUserException(f'No XPATH found for the property {property} of the user {self.username}.')
+        
+    def extract_displayed_name(self):
 
-            displayed_name_chunks: list = list()
-            for item in name_elements:
-                self._process_text(item, displayed_name_chunks)
-                self._process_link(item, displayed_name_chunks)
-                self._process_emoji(item, displayed_name_chunks)
+        property: str = user_versions.DISPLAYED_NAME_PROPERTY
+        xpaths_displayed_name: list = self.xpaths[property]
+        for xpath in xpaths_displayed_name:
+            try:
+                displayed_name_node = self._get_user_node(xpath)
+                if displayed_name_node is not None:
 
-            displayed_name: str = ''.join(displayed_name_chunks)
+                    name_elements: list = displayed_name_node.getchildren()
+                    displayed_name_chunks: list = list()
+                    for item in name_elements:
+                        self._process_text(item, displayed_name_chunks)
+                        self._process_link(item, displayed_name_chunks)
+                        self._process_emoji(item, displayed_name_chunks)
+                    displayed_name: str = ''.join(displayed_name_chunks)
+                    return {property : displayed_name}
+                
+            except Exception as e:
+                logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}')
+            
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
 
-            return {user_versions.DISPLAYED_NAME_PROPERTY : displayed_name}
-        except Exception as e:
-            raise ExtractUserException(f'Could not extract the displayed name of {self.username}. Reason {e} ')
+    def extract_account_status(self):
+
+        property: str = user_versions.ACCOUNT_STATUS_ITEMS
+        xpath_account_status: list = self.xpaths[property]
+
+        for xpath in xpath_account_status:
+            try:
+                account_status_node = self._get_user_node(xpath)
+                if account_status_node is not None:
+
+                    account_status: dict = {
+                        user_versions.IS_VERIFIED_PROPERTY : False,
+                        user_versions.VERIFIED_TYPE_PROPERTY : None,
+                        user_versions.IS_PRIVATE_PROPERTY : False
+                    }
+                    span_status: list = account_status_node.getchildren()
+                    for span in span_status:
+                        self._set_account_status(span, account_status)
+                    return account_status
+
+            except Exception as e:
+                logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}') 
+
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
     
-    def extract_account_status(self, section):
-
-        try:
-
-            account_status: dict = {
-                user_versions.IS_VERIFIED_PROPERTY : False,
-                user_versions.VERIFIED_TYPE_PROPERTY : None,
-                user_versions.IS_PRIVATE_PROPERTY : False
-            }
-
-            span_status: list = section.getchildren()
-            for span in span_status:
-                self._set_account_status(span, account_status)
-
-            return account_status
-        except Exception as e:
-            raise ExtractAccountStatusException(f'Could not extract the account status of the user {self.username}. Reason {e}')
-
     def _set_account_status(self, section, account_status: dict):
         try:
 
@@ -158,50 +195,82 @@ class UserParser:
             return fill_attribute is not None
         except Exception as e:
             return False
-    def extract_biography(self, section):
-        try:
-
-            biography_content: str = None
-            if section is not None:
-                biography_elements = section.getchildren()
-                
-                biography_chunks: list = list()
-                for element in biography_elements:
-                    self._process_text(element, biography_chunks)
-                    self._process_link(element, biography_chunks)
-                    self._process_emoji(element, biography_chunks)
-                    self._process_mention(element, biography_chunks)
-                    self._process_hashtag(element, biography_chunks)
-
-                biography_content: str = ''.join(biography_chunks)
-                del biography_chunks
-
-            return {user_versions.BIOGRAPHY_PROPERTY: biography_content}
-        
-        except ExtractBiographyException as e:
-            raise e
-
-    def extract_profile_header(self, section):
-
-        try:
-            header_items: list = section.getchildren()
+    def extract_biography(self):
             
-            header: dict = {
-                user_versions.CATEGORY_PROPERTY: user_versions.DEFAULT_CATEGORY,
-                user_versions.LOCATION_PROPERTY: None,
-                user_versions.LINK_PROPERTY: None,
-                user_versions.JOIN_DATE_PROPERTY: None
-            }
-            for item in header_items:
-                self._extract_category(item, header)
-                self._extract_location(item, header)
-                self._extract_link(item, header)
-                self._extract_join_date(item, header)
+        property: str = user_versions.BIOGRAPHY_PROPERTY
+        xpaths_biography: list = self.xpaths[property]
 
-            return header
-        except Exception as e:
-            raise ExtractHeaderProfileException(f'Could not extract the header profile for the user {self.username}. Reason {e}')
+        for xpath in xpaths_biography:
+            try:
+                biography_node = self._get_user_node(xpath)
 
+                if biography_node is not None:
+                    biography_content: str = None
+                    biography_elements = biography_node.getchildren()
+                    
+                    biography_chunks: list = list()
+                    for element in biography_elements:
+                        self._process_text(element, biography_chunks)
+                        self._process_link(element, biography_chunks)
+                        self._process_emoji(element, biography_chunks)
+                        self._process_mention(element, biography_chunks)
+                        self._process_hashtag(element, biography_chunks)
+
+                    biography_content: str = ''.join(biography_chunks)
+                    del biography_chunks
+
+                    return {property: biography_content}
+            
+            except ExtractBiographyException as e:
+                logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}')
+        
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
+
+        return {property: None}
+
+    def extract_profile_header(self):
+        property: str = user_versions.PROFILE_HEADER_ITEMS
+        xpath_header: list = self.xpaths[property]
+
+        for xpath in xpath_header:
+            try:
+                header_node = self._get_user_node(xpath)
+
+                if header_node is not None:
+                    header_items: list = header_node.getchildren()
+                    
+                    header: dict = {
+                        user_versions.CATEGORY_PROPERTY: user_versions.DEFAULT_CATEGORY,
+                        user_versions.LOCATION_PROPERTY: None,
+                        user_versions.LINK_PROPERTY: None,
+                        user_versions.JOIN_DATE_PROPERTY: None
+                    }
+                    for item in header_items:
+                        if user_versions.TODAY_BIRTHDAY_WORDING not in item.text_content():
+                            self._extract_category(item, header)
+                            self._extract_location(item, header)
+                            self._extract_link(item, header)
+                            self._extract_join_date(item, header)
+
+                    return header
+            except ExtractCategoryException as e:
+                logger.warning(f'Could not extract the category for the XPATH {xpath} of the user {self.username}. Reason {e}')
+            except ExtractLocationException as e:
+                logger.warning(f'Could not extract the location for the XPATH {xpath} of the user {self.username}. Reason {e}')
+            except ExtractLinkException as e:
+                logger.warning(f'Could not extract the link for the XPATH {xpath} of the user {self.username}. Reason {e}')
+            except ExtractJoinDateException as e:
+                logger.warning(f'Could not extract the join date for the XPATH {xpath} of the user {self.username}. Reason {e}')
+    
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
 
     def _extract_category(self, section, header: dict):
         try:
@@ -251,7 +320,7 @@ class UserParser:
                 raw_join_date: str = section.text_content()
                 raw_join_date = raw_join_date.split('Joined ')[1]
 
-                header[user_versions.JOIN_DATE_PROPERTY] = self._convert_date_with_month(raw_join_date)
+                header[user_versions.JOIN_DATE_PROPERTY] = f'{self._convert_date_with_month(raw_join_date)}-01'
 
         except Exception as e:
             raise ExtractJoinDateException(f'Could not extract the join date of {self.username}. Reason {e}')
@@ -260,42 +329,86 @@ class UserParser:
         date_object = datetime.strptime(date, '%B %Y')
         return date_object.strftime('%Y-%m')
     
-    def _convert_date_with_year_day_month(self, date: str):
-        ...
-    
-    def extract_followings(self, section):
-        try:
-            followings_raw: str = section.text_content()
-            return {user_versions.FOLLOWINGS_PROPERTY: self._convert_number_to_integer(followings_raw)}
-        except ConvertNumberToIntegerException as e:
-            raise e
-        except Exception as e:
-            raise ExtractFollowingsFollowersException(f'Could not extract the number of followings of the user {self.username}. Reason {e}')
-    
-    def extract_followers(self, section):
-        try:
-            followers_raw: str = section.text_content()
-            return {user_versions.FOLLOWERS_PROPERTY: self._convert_number_to_integer(followers_raw)}
-        except ConvertNumberToIntegerException as e:
-            raise e
-        except Exception as e:
-            raise ExtractFollowingsFollowersException(f'Could not extract the number of followers of the user {self.username}. Reason {e}')
+    def extract_followings(self):
         
-    def extract_posts_count(self, section):
-        try:
-            post_counts_raw: str = section.text_content()
-            post_counts_raw_split = post_counts_raw.split(' posts')
-            if len(post_counts_raw) == 2:
-                post_counts_raw = post_counts_raw_split[0]
-                return {user_versions.POSTS_COUNT_PROPERTY: self._convert_number_to_integer(post_counts_raw)}
-            
-            post_counts_raw = post_counts_raw.split(' post')[0]
-            return {user_versions.POSTS_COUNT_PROPERTY: self._convert_number_to_integer(post_counts_raw)}
-        except ConvertNumberToIntegerException as e:
-            raise e
-        except Exception as e:
-            raise ExtractPostsCountException(f'Could not extract the number of posts of the user {self.username}. Reason {e}')
+        property: str = user_versions.FOLLOWINGS_PROPERTY
+        xpaths_following: list = self.xpaths[property]
+
+        for xpath in xpaths_following:
+                
+                try:
+                    following_node = self._get_user_node(xpath)
+
+                    if following_node is not None:
+
+                        followings_raw: str = following_node.text_content()
+                        return {property: self._convert_number_to_integer(followings_raw)}
+                    
+                except ConvertNumberToIntegerException as e:
+                    raise e
+                except Exception as e:
+                    logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}')
+
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
     
+    def extract_followers(self):
+        
+        property: str =  user_versions.FOLLOWERS_PROPERTY
+        xpaths_followers: list = self.xpaths[property]
+        for xpath in xpaths_followers:
+            try:
+                node_followers = self._get_user_node(xpath)
+                if node_followers is not None:
+                    
+                    followers_raw: str = node_followers.text_content()
+                    return {property: self._convert_number_to_integer(followers_raw)}
+                
+            except ConvertNumberToIntegerException as e:
+                raise e
+            except Exception as e:
+                logger.warning(f'Could not extract the {property} for the XPATH {xpath} of the user {self.username}. Reason {e}')
+
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
+
+    def extract_posts_count(self):
+        
+        property: str = user_versions.POSTS_COUNT_PROPERTY
+        xpaths_post_counts: list = self.xpaths[property]
+
+        for xpath in xpaths_post_counts:
+            try:
+                node_post_counts = self._get_user_node(xpath)
+
+                if node_post_counts is not None:
+
+                    post_counts_raw: str = node_post_counts.text_content()
+                    post_counts_raw_split = post_counts_raw.split(' posts')
+                    if len(post_counts_raw) == 2:
+                        post_counts_raw = post_counts_raw_split[0]
+                        return {property: self._convert_number_to_integer(post_counts_raw)}
+                    
+                    post_counts_raw = post_counts_raw.split(' post')[0]
+                    return {property: self._convert_number_to_integer(post_counts_raw)}
+                
+            except ConvertNumberToIntegerException as e:
+                raise e
+            except Exception as e:
+                logger.warning(f'Could not extract the number of posts of the user {self.username}. Reason {e}')
+
+        really_has_content: bool = self._sanity_check_of(property, self.content)
+        if really_has_content:
+            raise NoXPathFoundException(f'The property {property} is on data test. The given XPATHS do not capture the information for the user {self.username}')
+        
+        logging.warning(f'No XPATH found for the property {property} of the user {self.username}.')
+
     def _convert_number_to_integer(self, raw_number: str):
         try:
             multipliers = {'K': 10**3, 'M': 10**6, 'B': 10**9, 'T': 10**12}

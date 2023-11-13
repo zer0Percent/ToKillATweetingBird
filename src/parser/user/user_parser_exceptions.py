@@ -9,22 +9,17 @@ class ParseUserException(Exception):
         self.message = message
         super().__init__(self.message)
 
+class NoXPathFoundException(ParseUserException):
+    def __init__(self, message) -> None:
+        self.message = message
+        super().__init__(self.message)
+
 class ExtractUserException(ParseUserException):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
 
-class ExtractAccountStatusException(ParseUserException):
-    def __init__(self, message) -> None:
-        self.message = message
-        super().__init__(self.message)
-
 class ExtractBiographyException(ParseUserException):
-    def __init__(self, message) -> None:
-        self.message = message
-        super().__init__(self.message)
-
-class ExtractHeaderProfileException(ParseUserException):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
@@ -45,16 +40,6 @@ class ExtractLinkException(ParseUserException):
         super().__init__(self.message)
 
 class ExtractJoinDateException(ParseUserException):
-    def __init__(self, message) -> None:
-        self.message = message
-        super().__init__(self.message)
-
-class ExtractFollowingsFollowersException(ParseUserException):
-    def __init__(self, message) -> None:
-        self.message = message
-        super().__init__(self.message)
-
-class ExtractPostsCountException(ParseUserException):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)

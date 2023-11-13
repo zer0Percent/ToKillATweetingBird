@@ -4,7 +4,7 @@ from lxml import  html
 from user import user_versions
 from user.user_parser import UserParser
 from connection.content_parsed_saver import ContentParsedSaver
-from user.user_parser_exceptions import GetRawUsersException, ParseUserException, PersistingUserException
+from user.user_parser_exceptions import GetRawUsersException, NoXPathFoundException, ParseUserException, PersistingUserException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -47,10 +47,9 @@ class UserParserRunner:
 
             try:   
                 content = bytearray(byte_array_content).decode()
-                user_tree = html.fromstring(content)
 
                 user_version_xpaths: dict = self.get_user_version_xpaths()
-                user_parser: UserParser = UserParser(username=username, user_tree=user_tree, xpaths=user_version_xpaths)
+                user_parser: UserParser = UserParser(username=username, content=content, xpaths=user_version_xpaths)
 
                 user_parsed: dict = user_parser.parse_user()
                 
@@ -72,7 +71,6 @@ class UserParserRunner:
                     )
                     
                     self.user_saver.save_user(tuple_user_parsed, id)
-                    # logging.info(f'User {username} saved.')
                 else:
                     self.user_saver.update_parsed(id)
 
@@ -81,6 +79,9 @@ class UserParserRunner:
                 del user_version_xpaths
                 del user_parsed
                 del user_parser
+
+            except NoXPathFoundException as e:
+                logging.error(f'{e.message}')
 
             except ParseUserException as e:
                 logging.error(f'{e.message}')
