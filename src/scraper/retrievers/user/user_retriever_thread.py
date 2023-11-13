@@ -14,12 +14,12 @@ class UserRetrieverThread:
 
     def __init__(self,
                   browser,
-                  title_wait_time: float,
+                  username_wait_time: float,
                   user_wait_time: float,
                   iteration: int) -> None:
         
         self.base_url: str = constants.USER_BASE_URL
-        self.title_wait_time: float = title_wait_time
+        self.username_wait_time: float = username_wait_time
         self.user_wait_time: float = user_wait_time
         self.iteration: int = iteration
 
@@ -72,20 +72,22 @@ class UserRetrieverThread:
                 # Click on button and wait for username again
                 self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(1)
-                cookie_button = self.browser.find_element(by=By.XPATH, value='/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/div[2]/div/div[3]')
+
+                cookie_button = self.browser.find_element(by=By.XPATH, value=constants.EXPLICIT_SEE_MORE_BUTTON_XPATH)
                 cookie_button.click()
+
                 self._wait_for_username(username)
                 body_content = self.browser.find_element(By.XPATH, constants.BODY_USER_XPATH)
 
             if constants.RESTRICTED_ACCOUNT in text_body:
                 # Click on button and wait for username again
-
                 self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(1)
-                cookie_button = self.browser.find_element(by=By.XPATH, value='/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/div[2]/div/div[3]')
-                cookie_button.click()
-                self._wait_for_username(username)
 
+                cookie_button = self.browser.find_element(by=By.XPATH, value=constants.RESTRICTED_SEE_MORE_BUTTON_XPATH)
+                cookie_button.click()
+
+                self._wait_for_username(username)
                 body_content = self.browser.find_element(By.XPATH, constants.BODY_USER_XPATH)
             
             return body_content
@@ -108,7 +110,7 @@ class UserRetrieverThread:
     
     def _wait_for_username(self, username: str):
         try:
-            WebDriverWait(self.browser, self.title_wait_time, constants.POOLING_TITLE_TIME).until(EC.text_to_be_present_in_element((By.XPATH, '/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span'), f'@{username}'))
+            WebDriverWait(self.browser, self.username_wait_time, constants.POOLING_TITLE_TIME).until(EC.text_to_be_present_in_element((By.XPATH, constants.USERNAME_XPATH), f'@{username}'))
 
         except Exception as e:
             raise WaitForUserNameException(f'Error when waiting for the @ with the user {username}')

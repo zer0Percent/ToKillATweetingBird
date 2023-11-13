@@ -35,7 +35,7 @@ class ScraperUserRunner:
     def scrape(
             usernames: list,
             thread_database: ThreadDatabase,
-            title_wait_time: float,
+            username_wait_time: float,
             user_wait_time: float,
             iteration: int):
 
@@ -49,7 +49,7 @@ class ScraperUserRunner:
 
             user_retriever_thread: UserRetrieverThread = UserRetrieverThread(
                 browser=browser,
-                title_wait_time=title_wait_time,
+                username_wait_time=username_wait_time,
                 user_wait_time=user_wait_time,
                 iteration=iteration
             )
@@ -92,27 +92,27 @@ class ScraperUserRunner:
     @staticmethod
     def _build_arguments(chunk_users: list,
                          thread_database: ThreadDatabase,
-                         title_wait_time: float, 
+                         username_wait_time: float, 
                          user_wait_time: float,
                          iteration: int):
 
         result = list()
         for chunk in chunk_users:
-            result.append(tuple([chunk]) + (thread_database, title_wait_time, user_wait_time, iteration))
+            result.append(tuple([chunk]) + (thread_database, username_wait_time, user_wait_time, iteration))
 
         return result
     
     @staticmethod
-    def _compute_timings(iteration: int, total_iterations: int, title_time: float, user_time: float):
+    def _compute_timings(iteration: int, total_iterations: int, username_time: float, user_time: float):
 
         if iteration == 1:
-            return (title_time, user_time)
+            return (username_time, user_time)
         
         iteration_constant = (iteration - 1) / total_iterations
-        title_time = title_time + title_time * iteration_constant + round(random.uniform(0.5, 0.9), 2)
+        username_time = username_time + username_time * iteration_constant + round(random.uniform(0.5, 0.9), 2)
         user_time = user_time + user_time * iteration_constant + round(random.uniform(0.5, 0.9), 2)
 
-        return (title_time, user_time)
+        return (username_time, user_time)
     
     @staticmethod
     def _chunk_dataset(usernames: list, chunk_size: int):
@@ -130,20 +130,20 @@ class ScraperUserRunner:
 
             UserSaver.preload_users(self.usernames)
 
-            title_time: float = constants.BASE_TITLE_TIME
+            username_time: float = constants.BASE_USERNAME_TIME
             user_time: float = constants.BASE_USER_TIME
             for i in range(1, self.iterations_number + 1):
                 
                 logging.info(f'[ITERATION {i}] Start scraping users')
                 
-                title_time_iter = title_time
+                username_time_iter = username_time
                 user_time_iter = user_time
 
                 logging.info(f'[ITERATION {i}] Compute timings for ITERATION...')
-                title_time_iter, user_time_iter = ScraperUserRunner._compute_timings(
+                username_time_iter, user_time_iter = ScraperUserRunner._compute_timings(
                         iteration=i,
                         total_iterations=self.iterations_number,
-                        title_time=title_time_iter,
+                        username_time=username_time_iter,
                         user_time=user_time_iter
                 )
 
@@ -157,7 +157,7 @@ class ScraperUserRunner:
                 args = ScraperUserRunner._build_arguments(
                     chunk_users=chunks,
                     thread_database=thread_db,
-                    title_wait_time=title_time_iter,
+                    username_wait_time=username_time_iter,
                     user_wait_time=user_time_iter,
                     iteration=i
                 )
@@ -195,6 +195,7 @@ class ScraperUserRunner:
                     successful.add(username)
                     logging.info(f'{iteration_attempt_info}{user_attempt_info} User saved with URL: {constants.USER_BASE_URL.format(username=username)}')
                     attempt = constants.ATTEMPT_USER_THRESHOLD
+                    time.sleep(2)
 
                 except NoExistsUserException as empty_user_e:
                     user_saver.update_empty_user(
