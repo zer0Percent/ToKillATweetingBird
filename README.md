@@ -129,7 +129,9 @@ The scrapers will request you to enter the path where your tweet identifiers/use
 
 # Running the tool
 
-Before start running the tool, you will need to configure a little bit the `database.toml` file in order to configure the database connections. There are two connections:
+Before start running the tool, you will need to configure a little bit the `database.toml` file in order to configure the database connections. Exactly, you need to set your `user` and `password` fields.
+
+To store the scraped and parsed information we consider two database connections:
 
 - `connection`. This database connection aims to persist the HTML content of the tweets/users. That is, it connects to the `tweetdata` database.
 - `parsed_tweet_connection`. This database connection aims to persist the extracted content of the HTML tweets/users. That is, it connects to the `tweetmodeling` database.
