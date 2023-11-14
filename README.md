@@ -136,9 +136,9 @@ Before start running the tool, you will need to configure a little bit the `data
 
 ## Tweet Scraper
 
-You need to run the `main.py` file placed in `/tokillatweetingbird/` folder in your command line with the format:
+You need to run the `tweet_retriever_main.py` file placed in `./ToKillATweetingBird/` folder in your command line with the format:
 
-`python main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE] [-n DATASET_NAME]`
+`python tweet_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE] [-n DATASET_NAME]`
 
 where: <br>
 
@@ -150,14 +150,31 @@ where: <br>
 
 ## User scraper
 
+Similar to the tweet scraper, you will need to run the `user_retriever_main.py` placed in `./ToKillATweetingBird/` folder with the command:
+
+`python user_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE]`
+
+where
+- `-i` Number of iterations over the CSV file. <br>
+- `-c` The number of lists that the list of user name is split. <br>
+- `-t` The number of threads you want to user when scraping. It equals to the number of browsers that will be opened at the same time. <br>
+- `-f` The CSV file with the user names. <br>
+
 ## Parser
 
 ### Tweet parser
 
-To parse the tweets stored in `tweetdata.dbo.rawtweet_test` table, you need to run the `main.py` of the folder `/tokillatweetingbird/src/parser/` in your command line with the format:
+To parse the tweets stored in `dbo.rawtweet` table, you need to run the `tweet_parser_main.py` file located in the folder `./ToKillATweetingBird/src/parser/` in your command line with the format:
 
-`python main.py [-n DATASET_NAME]`
+`python tweet_parser_main.py [-n DATASET_NAME]`
 
 where: <br>
 
 - `-n` The name of your dataset. Ensure that you do write this properly and you used it when scraping the tweets 😃.
+
+### User parser
+
+To parse the users stored in `dbo.rawuser` table you need to run the `user_parser_main.py` file, located in the folder `./ToKillATweetingBird/src/parser/` in your command line with the format:
+
+`python user_parser_main.py`
+
