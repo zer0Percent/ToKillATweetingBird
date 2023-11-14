@@ -109,10 +109,10 @@ Just clone the repository and:
    `pip install -r requirements.txt`
 2. Install the last version of Chrome in your machine.
 3. Download the last version of the Chrome driver and place them in the `tokillatweetingbird` repository folder. https://googlechromelabs.github.io/chrome-for-testing/
-4. Install PostgresSQL on your machine. I recommend to install `pgadmin` as well, just to run queries over your tweet data 😃. https://www.pgadmin.org/download/
-   4.1. Create the databases `tweetdata` and `tweetmodeling`.
-   4.2. Create the `dbo` schema in both databases.
-   4.3. Create the tables contained within `tweetdata.sql` and `tweetmodeling.sqp` files.
+4. Install PostgresSQL on your machine. I recommend to install `pgadmin` as well, just to run queries over your tweet data 😃. https://www.pgadmin.org/download/ </br>
+   4.1. Create the databases `tweetdata` and `tweetmodeling`. </br>
+   4.2. Create the `dbo` schema in both databases. </br>
+   4.3. Create the tables contained within `tweetdata.sql` and `tweetmodeling.sqp` files. </br>
 
 # Format of the tweet identifiers/user names list.
 
