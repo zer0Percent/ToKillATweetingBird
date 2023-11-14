@@ -1,6 +1,7 @@
 # ToKillATweetingBird (✨Thread's Version✨)
 
 ToKillATweetingBird (✨Thread's Version✨) or ToKATB (✨Thread's Version✨) is a multithreaded scraper, based on Selenium, that helps you to retrieve the body content of the tweets and user profiles (now posts in X) contained within a list of tweet identifiers and a list of user names.
+In this version, you do not need to login with a Twitter account ro tun the retrieval process.
 
 This tool consists of two parts that are executed separately:
 
@@ -11,10 +12,19 @@ All the information is stored in two PostgresSQL databases, `tweetdata` and `twe
 
 # How it works
 
-The tool prompts several headless Chrome browsers depending of the threads you write in the input. Each thread will perform a GET request with the tweet/user URL given the tweet identifier or the user name. Thus, you will need to download the Chrome drivers.
-The scraping process iterates over the entire dataset once is has finished just to ensure that we did not leave tweets/users pending to be retrieved. Furthermore, we split the entire dataset you input (list of tweet ID or list of user names) in fixed chunk size you will enter when running the tool. This is because we implement a retry policy in order to retry the requests of that chunk. In each chunk trial, we discard those tweets that were saved successfully or the owner of the tweets has his account locked/banned. To ensure that the tweet/user is retrieved properly, we attempt each user or tweet three times per chunk trial.
+The tool prompts several headless Chrome browsers depending of the threads you write in the input. Each thread will perform a GET request with the tweet/user URL given the tweet identifier or the user name. Thus, you will need to download the Chrome driver.
 
-For example, in one Iteration, we could find some tweets that has been deleted, accounts that has been banned or has privacy settings that do not allow to retrieve the tweet. We only detect those tweets whose user has been banned permanently or has his account locked since they are the only ones that can be detected without logging into the platform. When a user has been banned or has his account locked, we will get the message `Hmm...this page doesn’t exist. Try searching for something else.` These tweets, and the retrieved ones, will not be considered in further iterations of the scrapping process. Thus, with this setting, we shorten the scrapping time on each Iteration.
+The scraping process iterates over the entire dataset once it has finished, just to ensure that we did not leave tweets/users pending to be retrieved. Furthermore, we split the entire dataset you input (list of tweet ID or list of user names) in chunks with fixed size that you will enter when running the tool. We execute this splitting because we implement a retry policy per chunk over those tweets that could not be retrieved yet. In each chunk trial, we discard those tweets that were saved successfully or the owner of the tweets has his account locked/banned. To ensure that the tweet/user is retrieved properly, we attempt each user or tweet three times per chunk trial.
+
+   For example, in one Iteration, we could find some tweets that has been deleted, accounts that has been banned or has privacy settings that do not allow to retrieve the tweet. We only detect those tweets whose user has been banned permanently or has his account locked since they are the only ones that can be detected without logging into the platform. When a user has been banned or has his account locked, we will get the message `Hmm...this page doesn’t exist. Try searching for something else.` ir our browser. These tweets (and the retrieved ones) will not be considered in further iterations of the scrapping process. Thus, with this setting, we shorten the scrapping time on each Iteration.
+
+# How it really works
+
+## Tweet retriever.
+The tweet retriever will take the list of tweet identifiers and will try to save the inner HTML document of the tweet that will be stored in a PostgreSQL database for further processing. 
+
+For a given tweet $T$
+
 
 # Database tables
 
