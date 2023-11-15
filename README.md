@@ -52,7 +52,7 @@ With this, regarding the flag `is_empty` and `is_retrieved`, we have three feasi
 
 * State 1: `is_empty = false AND is_retrieved = false`. This State indicates that the tweet/user was not scraped yet OR it was scraped but something failed when scraping it. the tweets and users with this states will be candidates to be retrieved. <br>
 * State 2: `is_empty = false AND is_retrieved = true`. This State indicates that the tweet/user was retrieved with content successfully. <br>
-* State 3: `is_empty = true AND is_retrieved = true`. This State indicates that the tweet/user comes from a private/locked account or de user has been blocked/deleted. <br>
+* State 3: `is_empty = true AND is_retrieved = true`. This State indicates that the tweet/user comes from a private/locked account or the user has been blocked/deleted. <br>
 
 The table `dbo.preloaded_dataset` stores the dataset name you already tried to scrape when scraping tweets. That is, the `source_name` column. The value of this columns is given in the command to run the scraping process (see the section Command to run the scraper).
 
