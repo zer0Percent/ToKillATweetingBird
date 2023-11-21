@@ -1,11 +1,11 @@
 import sys
 import logging
-import tweet_versions
-from lxml import  html
-from tweet_parser import TweetParser
-import src.parser.tweet.constants as constants
+from lxml import html
+import tweet.constants as constants
+from tweet.tweet_parser import TweetParser
+import tweet.tweet_versions as tweet_versions
 from connection.content_parsed_saver import ContentParsedSaver
-from tweet_parser_exceptions import ParseTweetException, TweetVersioningException, PersistingTweetException, GetRawTweetsException
+from tweet.tweet_parser_exceptions import ParseTweetException, TweetVersioningException, PersistingTweetException, GetRawTweetsException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 

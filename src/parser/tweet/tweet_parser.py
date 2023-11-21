@@ -1,9 +1,9 @@
 import re
 import sys
 import logging
-import tweet_versions
-import src.parser.tweet.constants as constants
-from tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractTweetIdRetweeted, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessImgElementException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
+import tweet.constants as constants
+import tweet.tweet_versions as tweet_versions
+from tweet.tweet_parser_exceptions import ExtractActivityException, ExtractLanguageException, ExtractPublishTimeException, ExtractRetweetException, ExtractRetweeterException, ExtractTweetContentException, ExtractTweetIdRetweeted, ExtractUserException, ExtractVerifiedUserException, ProcessAElementException, ProcessEmojiException, ProcessImgElementException, ProcessMentionException, ProcessTextException, ExtractCitingToTweetException, ParseTweetException
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 

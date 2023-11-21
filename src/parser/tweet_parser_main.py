@@ -1,5 +1,5 @@
 import argparse
-from src.parser.tweet.parser_runner import TweetParserRunner
+from tweet.parser_runner import TweetParserRunner
 
 if __name__ == '__main__':
 
