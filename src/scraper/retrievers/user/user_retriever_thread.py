@@ -110,7 +110,7 @@ class UserRetrieverThread:
     
     def _wait_for_username(self, username: str):
         try:
-            WebDriverWait(self.browser, self.username_wait_time, constants.POOLING_TITLE_TIME).until(EC.text_to_be_present_in_element((By.XPATH, constants.USERNAME_XPATH), f'@{username}'))
+            WebDriverWait(self.browser, self.username_wait_time, constants.POOLING_TITLE_TIME).until(EC.text_to_be_present_in_element((By.XPATH, constants.USERNAME_XPATH), f'@'))
 
         except Exception as e:
             raise WaitForUserNameException(f'Error when waiting for the @ with the user {username}')
