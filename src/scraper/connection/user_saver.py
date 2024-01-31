@@ -80,12 +80,15 @@ class UserSaver:
         if are_already_retrieved:
             logging.info(f'The users are already preloaded.')
             return are_already_retrieved
-        
+            
         for user in users:
             values = (user,)
-            cursor.execute("INSERT INTO dbo.rawuser (username) VALUES (%s)",
-                        values)
-        connection.commit()
+            try:
+                cursor.execute("INSERT INTO dbo.rawuser (username) VALUES (%s)",
+                            values)
+                connection.commit()
+            except psycopg2.IntegrityError as e:
+                connection.commit()
 
         cursor.close()
         connection.close()
