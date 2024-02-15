@@ -361,9 +361,12 @@ class TweetParser:
                 tweet.append(element)
 
             if dom_element.tag == 'video':
-                element = f' {dom_element.attrib["src"]}'
+                shadow_content: list = dom_element.getchildren()
+                if len(shadow_content) > 0:
+                    video_url: str = shadow_content[0].attrib['src'].replace('blob:', '')
+                    element = f' {video_url}'
 
-                tweet.append(element)
+                    tweet.append(element)
                 
         except Exception as e:
             raise ProcessEmojiException(f'Error when processing the emojis for the tweet with ID {self.tweet_id}. Reason {e}')
