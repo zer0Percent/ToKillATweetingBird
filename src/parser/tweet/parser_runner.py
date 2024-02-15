@@ -24,7 +24,7 @@ class TweetParserRunner:
                 if len(raw_tweets) == 0:
                     logging.info(f'Parsed and inserted {parsed_tweets_count} Closing parser.')
                     self.tweet_saver.close_connection_destiny()
-                    return parsed_tweets
+                    return parsed_tweets_count
                 parsed_tweets: int = self.persist_tweets(raw_tweets, data_source)
                 parsed_tweets_count += parsed_tweets
                 del raw_tweets
