@@ -114,11 +114,11 @@ Just clone the repository and:
 4. Install PostgresSQL on your machine. I recommend to install `pgadmin` as well, just to run queries over your tweet data 😃. https://www.pgadmin.org/download/ </br>
    4.1. Create the databases `tweetdata` and `tweetmodeling`. </br>
    4.2. Create the `dbo` schema in both databases. </br>
-   4.3. Create the tables contained within `tweetdata.sql` and `tweetmodeling.sqp` files. </br>
+   4.3. Create the tables contained within `tweetdata.sql` and `tweetmodeling.sql` files. </br>
 
 # Format of the tweet identifiers/user names list.
 
-The scrapers will request you to enter the path where your tweet identifiers/user names file is. This file must have a specific (but easy) format: It's just a CSV file created with Pandas with one column called `tweet_id` or `username` in the case to run the user scraper. An example of how this CSV must look like is:
+The scraper will request you to enter the path where your tweet identifiers/user names file is. This file must have a specific (but easy) format: It's just a CSV file created with Pandas with one column called `tweet_id` or `username` in the case to run the user scraper. An example of how this CSV must look like is:
 
 ```
 ,tweet_id
@@ -147,10 +147,12 @@ You need to run the `tweet_retriever_main.py` file placed in `./ToKillATweetingB
 where: <br>
 
 - `-i` Number of iterations over the CSV file. <br>
-- `-c` The number of lists that the list of tweet identifiers is split. <br>
+- `-c` The number of tweets that a tweet's list will contain. <br>
 - `-t` The number of threads you want to user when scraping. It equals to the number of browsers that will be opened at the same time. <br>
 - `-f` The CSV file with the tweets identifiers. <br>
 - `-n` The name of your dataset. This is used when loading the entire list of tweets identifiers. Ensure that you do write this properly 😃.
+
+In short, `CHUNK_SIZE` splits the entire dataset in lists of `-c` elements and, for each list, a browser is opened. When the list is processed, the browser will close and another tweet's list will be processed by opening a new browser.
 
 ## User scraper
 
@@ -181,4 +183,8 @@ where: <br>
 To parse the users stored in `dbo.rawuser` table you need to run the `user_parser_main.py` file, located in the folder `./ToKillATweetingBird/src/parser/` in your command line with the format:
 
 `python user_parser_main.py`
+
+
+I would really APPRECIATE that if you find this tool interesting, mention it in your work and let me know!
+Happy scraping!
 
