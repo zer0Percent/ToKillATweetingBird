@@ -1,5 +1,8 @@
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/xctkst44k5o)
 
+I would really APPRECIATE that if you find this tool interesting, mention it in your work and let me know!
+Happy scraping! 🤗
+
 # ToKillATweetingBird (✨Thread's Version✨)
 
 ToKillATweetingBird (✨Thread's Version✨) or ToKATB (✨Thread's Version✨) is a multithreaded scraper, based on Selenium, that helps you to retrieve the body content of the tweets and user profiles (now posts in X) contained within a list of tweet identifiers and a list of user names.
