@@ -1,193 +1,180 @@
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/xctkst44k5o)
 
-I would really APPRECIATE that if you find this tool interesting, mention it in your work and let me know!
-Happy scraping! 🤗
+I would really **appreciate** it if you find this tool interesting — please mention it in your work and let me know!  
+Happy scraping!
 
 # ToKillATweetingBird (✨Thread's Version✨)
 
-ToKillATweetingBird (✨Thread's Version✨) or ToKATB (✨Thread's Version✨) is a multithreaded scraper, based on Selenium, that helps you to retrieve the body content of the tweets and user profiles (now posts in X) contained within a list of tweet identifiers and a list of user names.
-In this version, you do not need to login with a Twitter account ro tun the retrieval process.
+**ToKillATweetingBird (✨Thread's Version✨)** or **ToKATB (✨Thread's Version✨)** is a multithreaded scraper, based on Selenium, that helps you retrieve the body content of tweets and user profiles (now called posts and profiles on X) using a list of tweet identifiers and a list of usernames.  
+In this version, you do not need to log in with a Twitter account to run the retrieval process.
 
 This tool consists of two parts that are executed separately:
 
-1. A scraper that retrieves the HTML content of the tweet/user.
+1. A scraper that retrieves the HTML content of each tweet/user.
 2. A parser that, given a list of HTML tweets/users, extracts the information contained within the HTML document.
 
-All the information is stored in two PostgresSQL databases, `tweetdata` and `tweetmodeling`. The former stores the HTML documents with some information regarding the scraping status of the tweet/user. The second database stores the parsed content of the HTML documents.
+All the information is stored in two PostgreSQL databases: `tweetdata` and `tweetmodeling`.  
+The former stores the HTML documents and some metadata regarding scraping status.  
+The latter stores the parsed content of the HTML documents.
 
-# How it works
+# How It Works
 
-The tool prompts several headless Chrome browsers depending of the threads you write in the input. Each thread will perform a GET request with the tweet/user URL given the tweet identifier or the user name. Thus, you will need to download the Chrome driver.
+The tool launches several headless Chrome browsers depending on the number of threads you specify. Each thread performs a GET request using the tweet/user URL, constructed from either the tweet ID or the username.  
+**Note:** You will need to download the Chrome driver.
 
-The scraping process iterates over the entire dataset once it has finished, just to ensure that we did not leave tweets/users pending to be retrieved. Furthermore, we split the entire dataset you input (list of tweet ID or list of user names) in chunks with fixed size that you will enter when running the tool. We execute this splitting because we implement a retry policy per chunk over those tweets that could not be retrieved yet. In each chunk trial, we discard those tweets that were saved successfully or the owner of the tweets has his account locked/banned. To ensure that the tweet/user is retrieved properly, we attempt each user or tweet three times per chunk trial.
+The scraping process iterates over the entire dataset to ensure that no tweets/users are left unprocessed. Additionally, the dataset is split into fixed-size chunks, defined by the user at runtime. We do this to enable a retry policy per chunk, targeting tweets that failed to be retrieved in previous attempts.
 
-   For example, in one Iteration, we could find some tweets that has been deleted, accounts that has been banned or has privacy settings that do not allow to retrieve the tweet. We only detect those tweets whose user has been banned permanently or has his account locked since they are the only ones that can be detected without logging into the platform. When a user has been banned or has his account locked, we will get the message `Hmm...this page doesn’t exist. Try searching for something else.` ir our browser. These tweets (and the retrieved ones) will not be considered in further iterations in the scrapping process. Thus, with this setting, we shorten the scrapping time on each Iteration.
+In each chunk trial, tweets that were successfully saved or whose owners have locked/banned accounts are excluded. To ensure proper retrieval, each tweet/user is attempted **up to three times per chunk**.
 
-# Database tables
+For example, during one iteration, we may encounter tweets that have been deleted, accounts that have been banned, or tweets that are protected by privacy settings.  
+We are only able to detect accounts that are permanently banned or locked, since those are the only statuses detectable without logging in.  
+When this happens, the browser will display the message:  
+`Hmm...this page doesn’t exist. Try searching for something else.`  
+Such tweets (and already retrieved ones) are excluded from future iterations to reduce scraping time.
 
-We setup two databases in order to store the raw (HTML) tweets, the raw users and the parsed ones. That is, one for the Scraper and one for the parser. We split the tables required tables in two separated files named `tweetdata.sql` and `tweetmodeling.sql`.
+# Database Tables
 
-We recommend to build backups of your databases and store them in a safe storage system. Just in case that something goes REALLY wrong (you could lose all your data).
+We set up two databases to store:
+
+- Raw (HTML) tweets and users.
+- Parsed tweets and users.
+
+Each corresponds to either the scraper or the parser.  
+The required tables are defined in `tweetdata.sql` and `tweetmodeling.sql`.
+
+**Tip:** We recommend backing up your databases and storing them safely, in case something goes wrong (you don't want to lose your data!).
 
 ## Scraper
 
-### Tweet and user scraper
-Three tables are used to scrape store the HTML documents: `dbo.rawtweet`, `dbo.rawuser` and `dbo.preloaded_dataset`.
+### Tweet and User Scraper
 
-`dbo.rawtweet` stores the following information per tweet:
-- `tweet_id`: The tweet identifier. <br>
-- `source_name`: The name of the dataset that the tweet comes from.<br>
-- `is_empty`: Flag that indicates whether the tweet is empty. Default: `false` <br>
-- `is_retrieved`: Flag that indicates whether the tweet was retrieved. Default: `false` <br>
-- `tweet_content`: The HTML body content of the tweet. Example b`<div ...> ... <\div>`<br>
-- `parsed`: Flag that indicates whether the tweet was parsed. Default: `false`<br>
+Three tables are used to store the HTML documents:
 
-`dbo.rawuser` stores the following information per user:
+- `dbo.rawtweet`
+- `dbo.rawuser`
+- `dbo.preloaded_dataset`
 
-- `id`: Unique identifier of the user. <br>
-- `username`: The username. <br>
-- `is_empty`: Flag that indicates whether the user is empty. Default: `false` <br>
-- `is_retrieved`: Flag that indicates whether the user was retrieved. Default: `false` <br>
-- `user_content`: The HTML body content of the user. Example b`<div ...> ... <\div>`<br>
-- `parsed`: Flag that indicates whether the user was parsed. Default: `false`<br>
+#### `dbo.rawtweet`
 
-With this, regarding the flag `is_empty` and `is_retrieved`, we have three feasible states of a tweet/user:
+- `tweet_id`: Tweet identifier  
+- `source_name`: Dataset source name  
+- `is_empty`: Flag indicating if the tweet is empty (default: `false`)  
+- `is_retrieved`: Flag indicating if the tweet was successfully retrieved (default: `false`)  
+- `tweet_content`: HTML body of the tweet (e.g., `<div>...</div>`)  
+- `parsed`: Flag indicating whether the tweet has been parsed (default: `false`)
 
-* State 1: `is_empty = false AND is_retrieved = false`. This State indicates that the tweet/user was not scraped yet OR it was scraped but something failed when scraping it. the tweets and users with this states will be candidates to be retrieved. <br>
-* State 2: `is_empty = false AND is_retrieved = true`. This State indicates that the tweet/user was retrieved with content successfully. <br>
-* State 3: `is_empty = true AND is_retrieved = true`. This State indicates that the tweet/user comes from a private/locked account or the user has been blocked/deleted. <br>
+#### `dbo.rawuser`
 
-The table `dbo.preloaded_dataset` stores the dataset name you already tried to scrape when scraping tweets. That is, the `source_name` column. The value of this columns is given in the command to run the scraping process (see the section Command to run the scraper).
+- `id`: Unique user identifier  
+- `username`: Username (handle)  
+- `is_empty`: Flag indicating if the user profile is empty (default: `false`)  
+- `is_retrieved`: Flag indicating if the profile was retrieved (default: `false`)  
+- `user_content`: HTML body of the user profile  
+- `parsed`: Flag indicating whether the user profile has been parsed (default: `false`)
 
-In the first execution of the scraper, the tool will save all the tweet identifiers into the table `dbo.rawtweet`. This initialization step sets the `tweet_content` column to be `b''`. While scraping, this column will be updated.
+### Record States
 
-## Parsing HTML documents
+Each tweet/user can have one of three states:
 
-### Tweet parser
-The tweet parser aims to extract the information of a tweet given its HTML document. When running the parser, the information will be stored in the table called `dbo.tweet` in the database `tweetmodeling`. 
+1. `is_empty = false AND is_retrieved = false`: Not yet scraped or an error occurred. Will be retried.
+2. `is_empty = false AND is_retrieved = true`: Successfully retrieved.
+3. `is_empty = true AND is_retrieved = true`: Private, locked, blocked, or deleted.
 
-The extracted information of a tweet is:
+### `dbo.preloaded_dataset`
 
-- `tweet_id`. The ID of the tweet.
-- `source_name`. The dataset name of the tweet.
-- `username`. The username of the tweet.
-- `is_verified`. Flag that indicates whether the user of the tweet is verified.
-- `tweet_content`. The textual content of the tweet in UTF-8.
-- `citing_tweet_id`. The ID of the tweet if the tweet is citing to another tweet. Null if is not a citing tweet.
-- `citing_to_user`. The user name of cited tweet.
-- `tweet_language`. The language of the textual content of the tweet.
-- `retweets`. The number of retweets of the tweet.
-- `likes`. The number of likes of the tweet.
-- `citations`. The number of citations of the tweet.
-- `bookmarks`. The number of bookmarks of the tweet.
-- `is_retweet`. Flag that indicates whether the tweet is a retweet.
-- `retweeter`. The username of the user who retweets.
-- `tweet_id_retweeted`. Identifier of the tweet that is being retweeted.
-- `publish_time`. The datetime when the tweet was posted.
+This table stores dataset names (i.e., the `source_name` values) you've previously attempted to scrape.  
+The value is passed via the `-n` argument when running the scraper (see “Running the Tool”).
 
-### User parser
+On first execution, all tweet IDs are inserted into `dbo.rawtweet`, initializing `tweet_content` with `b''`.
 
-Similar to the tweet parser. The user parser reads the HTML document of the user.
+## Parsing HTML Documents
 
-The extracted information for a user is:
+### Tweet Parser
 
-- `id`. Unique identifier of the user.
-- `username`. The @ of the user.
-- `displayed_name`. The displayed name of the user.
-- `is_verified`. Flag that indicates whether the user is verified.
-- `verified_type`. The type of verification of the user. Four possible values: `null`, `gold`, `government`, `blue`.
-- `is_private`. Flag that indicates whether the user has privacy settings.
-- `biography`. The biography of the user. `null` if is empty.
-- `category`. The category of the user. For example, `Media & News Company`. `null` if not found.
-- `location`. The location of the user. It is free text regarding Twitter platform. `null` if not found.
-- `link`. The URL of the user. `null` if not found.
-- `join_date`. The date the user joined to the platform in format `YYYY-MM-01`.
-- `followings`. The number of accounts the user follows to.
-- `followers`. The number of followers of the user.
-- `posts_count`. The number of posts the user has posted.
+The tweet parser extracts structured information from the HTML and stores it in `dbo.tweet` (in `tweetmodeling`):
+
+- `tweet_id`, `source_name`, `username`, `is_verified`, `tweet_content`, `citing_tweet_id`, `citing_to_user`, `tweet_language`, `retweets`, `likes`, `citations`, `bookmarks`, `is_retweet`, `retweeter`, `tweet_id_retweeted`, `publish_time`
+
+### User Parser
+
+Similar to the tweet parser, but applied to user profiles. Fields stored include:
+
+- `id`, `username`, `displayed_name`, `is_verified`, `verified_type` (`null`, `gold`, `government`, `blue`), `is_private`, `biography`, `category`, `location`, `link`, `join_date`, `followings`, `followers`, `posts_count`
 
 # Requirements
 
-Just clone the repository and:
+Clone the repository and:
 
-1. Install all the dependencies with the command:
-   `pip install -r requirements.txt`
-2. Install the last version of Chrome in your machine.
-3. Download the last version of the Chrome driver and place them in the `tokillatweetingbird` repository folder. https://googlechromelabs.github.io/chrome-for-testing/
-4. Install PostgresSQL on your machine. I recommend to install `pgadmin` as well, just to run queries over your tweet data 😃. https://www.pgadmin.org/download/ </br>
-   4.1. Create the databases `tweetdata` and `tweetmodeling`. </br>
-   4.2. Create the `dbo` schema in both databases. </br>
-   4.3. Create the tables contained within `tweetdata.sql` and `tweetmodeling.sql` files. </br>
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Install the latest version of Chrome.
+3. Download the latest [Chrome driver](https://googlechromelabs.github.io/chrome-for-testing/) and place it in the repository folder.
+4. Install PostgreSQL.  
+   We recommend also installing [pgAdmin](https://www.pgadmin.org/download/) to query your data.
 
-# Format of the tweet identifiers/user names list.
+   4.1. Create the databases: `tweetdata` and `tweetmodeling`  
+   4.2. Create the `dbo` schema in both  
+   4.3. Create the tables from `tweetdata.sql` and `tweetmodeling.sql`
 
-The scraper will request you to enter the path where your tweet identifiers/user names file is. This file must have a specific (but easy) format: It's just a CSV file created with Pandas with one column called `tweet_id` or `username` in the case to run the user scraper. An example of how this CSV must look like is:
+# Format of Tweet/User CSV
 
-```
+The scraper expects a single-column CSV (from pandas) with either `tweet_id` or `username`:
+
+```csv
 ,tweet_id
 0,1252387836239593472
 1,1223121049325228034
-2,1223121502838521861
-3,1223141036354162689
-4,1223148934538854400
+...
 ```
 
-# Running the tool
+# Running the Tool
 
-Before start running the tool, you will need to configure a little bit the `database.toml` file in order to configure the database connections. Exactly, you need to set your `user` and `password` fields.
+Before running, configure `database.toml` with your DB `user` and `password`.
 
-To store the scraped and parsed information we consider two database connections:
+Two connections are used:
 
-- `connection`. This database connection aims to persist the HTML content of the tweets/users. That is, it connects to the `tweetdata` database.
-- `parsed_tweet_connection`. This database connection aims to persist the extracted content of the HTML tweets/users. That is, it connects to the `tweetmodeling` database.
+- `connection`: Connects to `tweetdata` for HTML content.
+- `parsed_tweet_connection`: Connects to `tweetmodeling` for parsed data.
 
 ## Tweet Scraper
 
-You need to run the `tweet_retriever_main.py` file placed in `./ToKillATweetingBird/` folder in your command line with the format:
+Run:
+```bash
+python tweet_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE] [-n DATASET_NAME]
+```
 
-`python tweet_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE] [-n DATASET_NAME]`
+- `-i`: Number of iterations over the CSV  
+- `-c`: Number of tweets per chunk  
+- `-t`: Number of threads (browsers)  
+- `-f`: Path to CSV file  
+- `-n`: Dataset name (used for tracking)
 
-where: <br>
+## User Scraper
 
-- `-i` Number of iterations over the CSV file. <br>
-- `-c` The number of tweets that a tweet's list will contain. <br>
-- `-t` The number of threads you want to user when scraping. It equals to the number of browsers that will be opened at the same time. <br>
-- `-f` The CSV file with the tweets identifiers. <br>
-- `-n` The name of your dataset. This is used when loading the entire list of tweets identifiers. Ensure that you do write this properly 😃.
+Run:
+```bash
+python user_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE]
+```
 
-In short, `CHUNK_SIZE` splits the entire dataset in lists of `-c` elements and, for each list, a browser is opened. When the list is processed, the browser will close and another tweet's list will be processed by opening a new browser.
+- Same meaning as above, adapted for users.
 
-## User scraper
+## Tweet Parser
 
-Similar to the tweet scraper, you will need to run the `user_retriever_main.py` placed in `./ToKillATweetingBird/` folder with the command:
+Run:
+```bash
+python tweet_parser_main.py [-n DATASET_NAME]
+```
 
-`python user_retriever_main.py [-i ITERATIONS] [-c CHUNK_SIZE] [-t THREADS] [-f CSV_FILE]`
+## User Parser
 
-where
-- `-i` Number of iterations over the CSV file. <br>
-- `-c` The number of lists that the list of user name is split. <br>
-- `-t` The number of threads you want to user when scraping. It equals to the number of browsers that will be opened at the same time. <br>
-- `-f` The CSV file with the user names. <br>
+Run:
+```bash
+python user_parser_main.py
+```
 
-## Parser
+---
 
-### Tweet parser
-
-To parse the tweets stored in `dbo.rawtweet` table, you need to run the `tweet_parser_main.py` file located in the folder `./ToKillATweetingBird/src/parser/` in your command line with the format:
-
-`python tweet_parser_main.py [-n DATASET_NAME]`
-
-where: <br>
-
-- `-n` The name of your dataset. Ensure that you do write this properly and you used it when scraping the tweets 😃.
-
-### User parser
-
-To parse the users stored in `dbo.rawuser` table you need to run the `user_parser_main.py` file, located in the folder `./ToKillATweetingBird/src/parser/` in your command line with the format:
-
-`python user_parser_main.py`
-
-
-I would really APPRECIATE that if you find this tool interesting, mention it in your work and let me know!
+If you found this tool helpful, I’d **really appreciate** it if you mention it in your work and let me know!  
 Happy scraping!
-
