@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS dbo.tweet
 	tweet_id_retweeted character varying(200) COLLATE pg_catalog."default",
 	publish_time timestamp NOT NULL,
 	PRIMARY KEY (tweet_id, source_name)
-)
+);
 
 CREATE TABLE IF NOT EXISTS dbo.user
 (
