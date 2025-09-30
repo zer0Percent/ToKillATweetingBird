@@ -64,24 +64,23 @@ class TweetRetrieverThread:
     def get_tweet_from_browser(self, tweet_id: str):
 
         try:
-
-            self._wait_for_presence_of_all_title_elements()
             self._wait_for_dots_in_title()
             self._wait_for_tweetdiv()
             body_content = self.browser.find_element(By.XPATH, constants.BODY_TWEET_XPATH)
             return body_content
 
         except WaitForTitleException as wait_title_e:
-            
+
+            wait_title_e.message = f'{wait_title_e.message} Tweet URL: {self.base_url}{tweet_id}'
+
             text_page_is_down = self._get_page_is_down_content()
             if constants.PAGE_IS_DOWN in text_page_is_down:
                 raise PageIsDownException(f'The page is down. Tweet URL: {self.base_url}{tweet_id}')
             
-            text_empty_tweet = self._get_empty_tweet_content()
+            text_empty_tweet: str = self._get_empty_tweet_content()
             if constants.PAGE_DOES_NOT_EXISTS in text_empty_tweet or constants.PAGE_DOES_NOT_EXISTS_SPACE in text_empty_tweet:
-                raise EmptyTweetException(f'Tweet in private/blocked account. Tweet URL: {self.base_url}{tweet_id}')
+                raise wait_title_e
 
-            wait_title_e.message = f'{wait_title_e.message} Tweet URL: {self.base_url}{tweet_id}'
             raise wait_title_e
         
         except WaitForTweetDivException as wait_tweet_div_e:

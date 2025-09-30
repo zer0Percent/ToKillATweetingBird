@@ -224,7 +224,8 @@ class ScraperTweetRunner:
                     logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {get_tweet_e.message}')
 
                 except WaitForTitleException as e:
-                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {str(e.message)} ')
+                    logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {str(e.message)}.')
+                    time.sleep(5) # We wait a little bit per attempt
 
                 except WaitForTweetDivException as e:
                     logging.error(f'{iteration_attempt_info}{tweet_attempt_info} {str(e.message)}')
