@@ -1,4 +1,3 @@
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/xctkst44k5o)
 
 I would really **appreciate** it if you find this tool interesting — please mention it in your work and let me know!  
 Happy scraping!
